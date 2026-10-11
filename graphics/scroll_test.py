@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+
 from matplotlib.widgets import Slider
 matplotlib.use('TkAgg')
 import pandas as pd
