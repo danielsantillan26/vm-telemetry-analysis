@@ -41,6 +41,9 @@ def datapoint_selection():
         data = pd.read_csv(file_to_read)
 
         if (selected_speed.get() == 1):
+            for widget in pane_speed.winfo_children():
+                widget.destroy()
+
             fig = Figure(figsize=(5, 4), dpi = 100)
             ax = fig.add_subplot(111)
             ax.plot(data.iloc[:, 0], data.iloc[:, 3], color = "#00afff", linestyle = "-", linewidth = 0.5)
@@ -55,6 +58,9 @@ def datapoint_selection():
                 widget.destroy()
 
         if (selected_radius.get() == 1):
+            for widget in pane_radius.winfo_children():
+                widget.destroy()
+
             fig = Figure(figsize=(5,4), dpi = 100)
             ax = fig.add_subplot(111)
             ax.plot(data.iloc[:, 0], data.iloc[:, 4], color = "#ff5300", linestyle = "-", linewidth = 0.5)
@@ -65,7 +71,7 @@ def datapoint_selection():
             canvas.draw()
             canvas.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
         else:
-            for widget in pane_speed.winfo_children():
+            for widget in pane_radius.winfo_children():
                 widget.destroy()
 
         # TODO - Figure out how to do the G-G scatterplot from Chloe
@@ -74,17 +80,46 @@ def datapoint_selection():
         if (selected_g_lon.get() == 1):
             print(4)
 
+        # TODO - Determine where to find accel/brake pressure on the data
         if (selected_accel_prs.get() == 1 or selected_brake_prs.get() == 1):
             fig = Figure(figsize=(5,4), dpi = 100)
-
+            ax = fig.add_subplot(111)
+            # if (selected_accel_prs.get() == 1 and selected_brake_prs.get() == 0):
+              #   ax.plot(data.iloc[:, 0], data.iloc[:, 5], color = "#00ff22", linestyle = "-", linewidth = 0.5)
+               #  print()
+            # elif (selected_brake_prs.get() == 1 and selected_accel_prs.get() == 0):
+                # print()
+            # else:
+              #   ax.plot(data.iloc[:, 0],)
 
 
         if (selected_yaw_vel.get() == 1):
             print(7)
         if (selected_yaw_acc.get() == 1):
             print(8)
+
         if (selected_slip_angle.get() == 1):
-            print(9)
+            for widget in pane_slip_angle.winfo_children():
+                widget.destroy()
+
+            fig = Figure(figsize=(5,4),dpi = 100)
+            ax = fig.add_subplot(111)
+            ax.plot(data.iloc[:, 0], data.iloc[:, 8], color = "#fe00ff", linestyle = "-", linewidth = 0.5, label= "Front Slip")
+            ax.set_title("Slip Angle")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Slip Angle (degrees)")
+
+            ax2 = ax.twinx()
+            ax2.plot(data.iloc[:, 0], data.iloc[:, 9], color = "#e3ff00", linestyle = "-", linewidth = 0.5, )
+
+            canvas = FigureCanvasTkAgg(fig, master = pane_slip_angle)
+            canvas.draw()
+            canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
+        else:
+            for widget in pane_slip_angle.winfo_children():
+                widget.destroy()
+
+
         if (selected_slip_ratio.get() == 1):
             print(10)
         if (selected_tire_fy.get() == 1):
