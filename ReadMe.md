@@ -1,1 +1,1 @@
-**Project Members: Daniel Santillan, Peter Choubah**
+**Project Members: Daniel Santillan, Peter Choubah, Javier Hamilton**
