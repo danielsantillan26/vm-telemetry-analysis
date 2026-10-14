@@ -20,30 +20,37 @@ active_plots = {}
 
 
 # VARIABLES AND SETUP
-file_to_read = None
+file_prev = None
+file_live = None
+mode = 0
 Plot, Axis = plt.subplots()
 plt.subplots_adjust(bottom=0.25)
 plt.style.use('dark_background')
 
 
-# FUNCTIONS
-
 def mode_selection():
     """Determine the selected software mode and modify software options."""
+    global mode
     mode_choice = mode_choice_var.get()
     if mode_choice == 1:
+        mode = 1
         print("Live Run")
     elif mode_choice == 2:
+        mode = 2
         print("Previous Run Review")
 
 def render_plots():
     """Displays selected graphs based on selected file (if a file is selected)."""
-    global file_to_read
+    global file_prev
     global active_plots
+    global mode
     active_plots.clear()
 
-    if (file_to_read):
-        data = pd.read_csv(file_to_read)
+    if (file_prev):
+        data = pd.read_csv(file_prev)
+        data2 = None
+        if (file_live):
+            data2 = pd.read_csv(file_live)
 
         pane_speed.pack_forget()
         for w in pane_speed.winfo_children():
@@ -61,6 +68,11 @@ def render_plots():
             canvas_speed.get_tk_widget().pack(side = TOP, fill = BOTH, expand=True)
 
             active_plots["speed"] = {"canvas": canvas_speed}
+
+            if (file_live):
+                ax_speed_2 = ax_speed.twinx()
+                ax_speed_2.plot(data2.iloc[:, 0], data2.iloc[:, 3], color = "#0075ff", linewidth = 0.5)
+
 
         pane_radius.pack_forget()
         for w in pane_radius.winfo_children():
@@ -180,18 +192,54 @@ def render_plots():
 
 
 
-
-
-
-def open_file_dialog():
-    global file_to_read
+def open_prev_file_dialog():
+    global file_prev
     file_path = filedialog.askopenfilename(initialdir = "/", title = "Select .csv to run",
                                            filetypes =(("csv files", "*.csv"),))
     if file_path:
         print(f"Selected File: {file_path}")
-        file_to_read = file_path
+        file_prev = file_path
     else:
         print("No file selected")
+
+def open_live_file_dialog():
+    global file_live
+    file_path = filedialog.askopenfilename(initialdir = "/", title = "Select .csv to run",
+                                           filetypes =(("csv files", "*.csv"),))
+    if file_path:
+        print(f"Selected File: {file_path}")
+        file_live = file_path
+    else:
+        print("No file selected")
+
+def reset_prev():
+    global file_prev
+    file_prev = None
+    clear_data()
+
+def reset_live():
+    global file_live
+    file_live = None
+    clear_data()
+
+def clear_data():
+    pane_speed.pack_forget()
+    pane_radius.pack_forget()
+    pane_g_lat.pack_forget()
+    pane_g_lon.pack_forget()
+    pane_steering_angle.pack_forget()
+    pane_accel_prs.pack_forget()
+    pane_brake_prs.pack_forget()
+    pane_yaw_vel.pack_forget()
+    pane_yaw_acc.pack_forget()
+    pane_slip_angle.pack_forget()
+    pane_slip_ratio.pack_forget()
+    pane_tire_fy.pack_forget()
+    pane_roll_grad.pack_forget()
+    pane_pitch_grad.pack_forget()
+    pane_beta.pack_forget()
+    pane_battery_power.pack_forget()
+    pane_power_draw.pack_forget()
 
 
 
@@ -228,13 +276,26 @@ label_choose_files = Label(pane_options, text="Choose Previous Run .csv", font =
                            anchor = "w", justify = "left")
 label_choose_files.place(anchor = "nw", relx = 0.01, rely = 0.16, relheight = 0.04)
 
-button_choose_files = Button(pane_options, text = "Choose Files", command = open_file_dialog, justify = "center", width = 20, height = 8)
+button_choose_files = Button(pane_options, text = "Choose File", command = open_prev_file_dialog, justify = "center", width = 20, height = 8)
 button_choose_files.place(anchor = "nw", relx = 0.01, rely = 0.20, relheight = 0.03)
+
+button_prev_reset = Button(pane_options, text = "Reset", command = reset_prev, justify = "center", width = 20, height = 8)
+button_prev_reset.place(anchor = "nw", relx = 0.55, rely = 0.20, relwidth = 0.25, relheight = 0.03)
+
+label_choose_files_2 = Label(pane_options, text="Choose Live/Previous Run .csv", font = ("Segoe UI", 12), activeforeground = "black",
+                             anchor = "w", justify = "left")
+label_choose_files_2.place(anchor = "nw", relx = 0.01, rely = 0.25, relheight = 0.04)
+
+button_choose_files_2 = Button(pane_options, text = "Choose File", command = open_live_file_dialog, justify = "center", width = 20, height = 8)
+button_choose_files_2.place(anchor = "nw", relx = 0.01, rely = 0.29, relheight = 0.03)
+
+button_live_reset = Button(pane_options, text = "Reset", command = reset_live, justify = "center", width = 20, height = 8)
+button_live_reset.place(anchor = "nw", relx = 0.55, rely = 0.29, relwidth = 0.25, relheight = 0.03)
 
 
 label_select_datapoints = Label(pane_options, text="Select Visible Datapoints", font = ("Segoe UI", 12),
                                 activeforeground = "black", anchor = "w", justify = "left")
-label_select_datapoints.place(anchor = "nw", relx = 0.01, rely = 0.25, relheight = 0.04)
+label_select_datapoints.place(anchor = "nw", relx = 0.01, rely = 0.32, relheight = 0.04)
 
 selected_speed = IntVar()
 selected_radius = IntVar()
@@ -272,26 +333,26 @@ check_beta = Checkbutton(pane_options, text = "Beta", anchor = "w", justify = "l
 check_battery_power = Checkbutton(pane_options, text = "Battery Power", anchor = "w", justify = "left", variable = selected_battery_power)
 check_power_draw = Checkbutton(pane_options, text = "Power Draw", anchor = "w", justify = "left", variable = selected_power_draw)
 
-check_speed.place(anchor = "nw", relx = 0.01, rely = 0.28, relheight = 0.05)
-check_radius.place(anchor = "nw", relx = 0.01, rely = 0.315, relheight = 0.05)
-check_g_lat.place(anchor = "nw", relx = 0.01, rely = 0.35, relheight = 0.05)
-check_g_lon.place(anchor = "nw", relx = 0.01, rely = 0.385, relheight = 0.05)
-check_steering_angle.place(anchor = "nw", relx = 0.01, rely = 0.42, relheight = 0.05)
-check_accel_prs.place(anchor = "nw", relx = 0.01, rely = 0.455, relheight = 0.05)
-check_brake_prs.place(anchor = "nw", relx = 0.01, rely = 0.49, relheight = 0.05)
-check_yaw_vel.place(anchor = "nw", relx = 0.01, rely = 0.525, relheight = 0.05)
-check_yaw_acc.place(anchor = "nw", relx = 0.01, rely = 0.56, relheight = 0.05)
-check_slip_angle.place(anchor = "nw", relx = 0.01, rely = 0.595, relheight = 0.05)
-check_slip_ratio.place(anchor = "nw", relx = 0.01, rely = 0.63, relheight = 0.05)
-check_tire_fy.place(anchor = "nw", relx = 0.01, rely = 0.665, relheight = 0.05)
-check_roll_grad.place(anchor = "nw", relx = 0.01, rely = 0.7, relheight = 0.05)
-check_pitch_grad.place(anchor = "nw", relx = 0.01, rely = 0.735, relheight = 0.05)
-check_beta.place(anchor = "nw", relx = 0.01, rely = 0.77, relheight = 0.05)
-check_battery_power.place(anchor = "nw", relx = 0.01, rely = 0.805, relheight = 0.05)
-check_power_draw.place(anchor = "nw", relx = 0.01, rely = 0.840, relheight = 0.05)
+check_speed.place(anchor = "nw", relx = 0.01, rely = 0.35, relheight = 0.05)
+check_radius.place(anchor = "nw", relx = 0.01, rely = 0.385, relheight = 0.05)
+check_g_lat.place(anchor = "nw", relx = 0.01, rely = 0.42, relheight = 0.05)
+check_g_lon.place(anchor = "nw", relx = 0.01, rely = 0.455, relheight = 0.05)
+check_steering_angle.place(anchor = "nw", relx = 0.01, rely = 0.49, relheight = 0.05)
+check_accel_prs.place(anchor = "nw", relx = 0.01, rely = 0.525, relheight = 0.05)
+check_brake_prs.place(anchor = "nw", relx = 0.01, rely = 0.56, relheight = 0.05)
+check_yaw_vel.place(anchor = "nw", relx = 0.01, rely = 0.595, relheight = 0.05)
+check_yaw_acc.place(anchor = "nw", relx = 0.01, rely = 0.63, relheight = 0.05)
+check_slip_angle.place(anchor = "nw", relx = 0.01, rely = 0.665, relheight = 0.05)
+check_slip_ratio.place(anchor = "nw", relx = 0.01, rely = 0.70, relheight = 0.05)
+check_tire_fy.place(anchor = "nw", relx = 0.01, rely = 0.735, relheight = 0.05)
+check_roll_grad.place(anchor = "nw", relx = 0.01, rely = 0.77, relheight = 0.05)
+check_pitch_grad.place(anchor = "nw", relx = 0.01, rely = 0.805, relheight = 0.05)
+check_beta.place(anchor = "nw", relx = 0.01, rely = 0.84, relheight = 0.05)
+check_battery_power.place(anchor = "nw", relx = 0.01, rely = 0.875, relheight = 0.05)
+check_power_draw.place(anchor = "nw", relx = 0.01, rely = 0.910, relheight = 0.05)
 
 button_visible_datapoints = Button(pane_options, text ="Confirm", command = render_plots, justify ="center", width = 20, height = 8)
-button_visible_datapoints.place(anchor ="nw", relx = 0.01, rely = 0.90, relheight = 0.03)
+button_visible_datapoints.place(anchor ="nw", relx = 0.01, rely = 0.96, relheight = 0.03)
 
 
 # Set up scrollbar and data frames
