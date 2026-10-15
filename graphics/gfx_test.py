@@ -13,7 +13,7 @@ root = Tk()
 
 # Virginia Motorsports Telemetry Analysis Software
 root.title("VMTAS")
-root.iconbitmap('img/vmtas_icon.ico')
+root.iconbitmap('../img/vmtas_icon.ico')
 root.geometry('1200x800')
 root.resizable(False, False)
 active_plots = {}
@@ -67,7 +67,7 @@ def render_plots():
             canvas_speed.draw()
             canvas_speed.get_tk_widget().pack(side = TOP, fill = BOTH, expand=True)
 
-            active_plots["speed"] = {"canvas": canvas_speed}
+            active_plots["speed"] = {"canvas": canvas_speed, "axis": ax_speed}
 
             if (file_live):
                 ax_speed_2 = ax_speed.twinx()
@@ -89,7 +89,7 @@ def render_plots():
             canvas_radius.draw()
             canvas_radius.get_tk_widget().pack(side = TOP, fill = BOTH, expand=True)
 
-            active_plots["radius"] = {"canvas": canvas_radius}
+            active_plots["radius"] = {"canvas": canvas_radius, "axis": ax_radius}
 
         pane_steering_angle.pack_forget()
         for w in pane_steering_angle.winfo_children():
@@ -106,7 +106,7 @@ def render_plots():
             canvas_steering_angle.draw()
             canvas_steering_angle.get_tk_widget().pack(side = TOP, fill = BOTH, expand=True)
 
-            active_plots["steering angle"] = {"canvas": canvas_steering_angle}
+            active_plots["steering angle"] = {"canvas": canvas_steering_angle, "axis": ax_steering_angle}
 
         pane_slip_angle.pack_forget()
         for w in pane_slip_angle.winfo_children():
@@ -132,7 +132,8 @@ def render_plots():
             canvas_slip_angle.draw()
             canvas_slip_angle.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-            active_plots["slip angle"] = {"canvas": canvas_slip_angle}
+            active_plots["front slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_front_slip_angle}
+            active_plots["rear slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_rear_slip_angle}
 
         pane_beta.pack_forget()
         for w in pane_beta.winfo_children():
@@ -149,7 +150,7 @@ def render_plots():
             canvas_beta.draw()
             canvas_beta.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-            active_plots["beta"] = {"canvas": canvas_beta}
+            active_plots["beta"] = {"canvas": canvas_beta, "axis": ax_beta}
 
         pane_battery_power.pack_forget()
         for w in pane_battery_power.winfo_children():
@@ -166,7 +167,7 @@ def render_plots():
             canvas_battery_power.draw()
             canvas_battery_power.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-            active_plots["battery power"] = {"canvas": canvas_battery_power}
+            active_plots["battery power"] = {"canvas": canvas_battery_power, "axis": ax_battery_power}
 
         pane_power_draw.pack_forget()
         for w in pane_power_draw.winfo_children():
@@ -183,13 +184,21 @@ def render_plots():
             canvas_power_draw.draw()
             canvas_power_draw.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-            active_plots["power draw"] = {"canvas": canvas_power_draw}
+            active_plots["power draw"] = {"canvas": canvas_power_draw, "axis": ax_power_draw}
 
 
 
     else:
         messagebox.showwarning("Error", "Please select a .csv file")
 
+
+def update_all_plots(val):
+    for plot in active_plots.values():
+        offset = float(val)
+        window_size = 10.0
+
+        plot["axis"].set_xlim(offset, offset + window_size)
+        plot["canvas"].draw_idle()
 
 
 def open_prev_file_dialog():
@@ -241,6 +250,28 @@ def clear_data():
     pane_battery_power.pack_forget()
     pane_power_draw.pack_forget()
 
+def _on_mousewheel(event):
+  # Windows & macOS
+  if event.delta:
+    canvas_data.yview_scroll(int(-1 * (event.delta / 120)), "units")
+  # Linux scroll up
+  elif event.num == 4:
+    canvas_data.yview_scroll(-1, "units")
+  # Linux scroll down
+  elif event.num == 5:
+    canvas_data.yview_scroll(1, "units")
+
+
+def _bind_mousewheel(event):
+  canvas_data.bind_all("<MouseWheel>", _on_mousewheel)
+  canvas_data.bind_all("<Button-4>", _on_mousewheel)
+  canvas_data.bind_all("<Button-5>", _on_mousewheel)
+
+
+def _unbind_mousewheel(event):
+  canvas_data.unbind_all("<MouseWheel>")
+  canvas_data.unbind_all("<Button-4>")
+  canvas_data.unbind_all("<Button-5>")
 
 
 # GRAPHICS
@@ -376,6 +407,9 @@ canvas_data.bind(
     lambda e: canvas_data.itemconfig(canvas_data_window, width=e.width)
 )
 
+canvas_data.bind("<Enter>", _bind_mousewheel)
+canvas_data.bind("<Leave>", _unbind_mousewheel)
+
 pane_speed = Frame(pane_scrollable, relief = "groove")
 pane_radius = Frame(pane_scrollable, relief = "groove")
 pane_g_lat = Frame(pane_scrollable, relief = "groove")
@@ -393,6 +427,9 @@ pane_pitch_grad = Frame(pane_scrollable, relief = "groove")
 pane_beta = Frame(pane_scrollable, relief = "groove")
 pane_battery_power = Frame(pane_scrollable, relief = "groove")
 pane_power_draw = Frame(pane_scrollable, relief = "groove")
+
+slider = Scale(canvas_data, from_=0, to=100, orient="horizontal", label="Scroll", command=update_all_plots)
+slider.pack(fill="x", anchor="n", expand=True)
 
 pane.add(pane_options)
 pane.add(pane_data)
