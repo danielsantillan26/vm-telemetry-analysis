@@ -193,11 +193,7 @@ def render_plots():
             canvas_battery_power.draw()
             canvas_battery_power.get_tk_widget().pack(side = TOP, fill = BOTH, expand = True)
 
-            active_plots["battery power"] = {"canvas": canvas_battery_power, "axis": ax_battery_power}
-
-            if (file_live):
-                ax_battery_power_2 = ax_battery_power.twinx()
-                ax_battery_power_2.plot(data2.iloc[:, 2], data2.iloc[:, 13], color = "#9e2600", linewidth = 0.5)
+            active_plots["battery power"] = {"canvas": canvas_battery_power}
 
         pane_power_draw.pack_forget()
         for w in pane_power_draw.winfo_children():
