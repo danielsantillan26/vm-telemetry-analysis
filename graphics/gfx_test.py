@@ -27,6 +27,11 @@ Plot, Axis = plt.subplots()
 plt.subplots_adjust(bottom=0.25)
 plt.style.use('dark_background')
 
+is_playing = False
+play_speed = 0.1
+frame_delay = 50
+after_id = None
+
 
 def mode_selection():
     """Determine the selected software mode and modify software options."""
@@ -59,7 +64,7 @@ def render_plots():
             pane_speed.pack(fill="x", expand=True)
             fig_speed = Figure(figsize = (5, 4), dpi = 100)
             ax_speed = fig_speed.add_subplot(111)
-            ax_speed.plot(data.iloc[:, 0], data.iloc[:, 3], color = "#00afff", linewidth = 0.5)
+            ax_speed.plot(data.iloc[:, 2], data.iloc[:, 5], color = "#00afff", linewidth = 0.5)
             ax_speed.set_title("Speed Plot")
             ax_speed.set_xlabel("Time (s)")
             ax_speed.set_ylabel("Speed (mph)")
@@ -71,7 +76,10 @@ def render_plots():
 
             if (file_live):
                 ax_speed_2 = ax_speed.twinx()
-                ax_speed_2.plot(data2.iloc[:, 0], data2.iloc[:, 3], color = "#0075ff", linewidth = 0.5)
+                ax_speed_2.plot(data2.iloc[:, 2], data2.iloc[:, 5], color = "#0075ff", linewidth = 0.5)
+
+        # TODO: Once you get the new data files, make sure they all work, and then run a multiprocess for them.
+        # TODO: Make sure all the colors are different!
 
 
         pane_radius.pack_forget()
@@ -81,7 +89,7 @@ def render_plots():
             pane_radius.pack(fill="x", expand=True)
             fig_radius = Figure(figsize = (5, 4), dpi = 100)
             ax_radius = fig_radius.add_subplot(111)
-            ax_radius.plot(data.iloc[:, 0], data.iloc[:, 4], color = "#ff5300", linewidth = 0.5)
+            ax_radius.plot(data.iloc[:, 2], data.iloc[:, 6], color = "#ff5300", linewidth = 0.5)
             ax_radius.set_title("Radius Plot")
             ax_radius.set_xlabel("Time (s)")
             ax_radius.set_ylabel("Radius (ft)")
@@ -91,6 +99,10 @@ def render_plots():
 
             active_plots["radius"] = {"canvas": canvas_radius, "axis": ax_radius}
 
+            if (file_live):
+                ax_radius_2 = ax_radius.twinx()
+                ax_radius_2.plot(data2.iloc[:, 2], data2.iloc[:, 6], color = "#9b3200", linewidth = 0.5)
+
         pane_steering_angle.pack_forget()
         for w in pane_steering_angle.winfo_children():
             w.destroy()
@@ -98,7 +110,7 @@ def render_plots():
             pane_steering_angle.pack(fill="x", expand=True)
             fig_steering_angle = Figure(figsize = (5, 4), dpi = 100)
             ax_steering_angle = fig_steering_angle.add_subplot(111)
-            ax_steering_angle.plot(data.iloc[:, 0], data.iloc[:, 7], color = "#ffffff", linewidth = 0.5)
+            ax_steering_angle.plot(data.iloc[:, 2], data.iloc[:, 9], color = "#ffffff", linewidth = 0.5)
             ax_steering_angle.set_title("Steering Angle Plot")
             ax_steering_angle.set_xlabel("Time (s)")
             ax_steering_angle.set_ylabel("Angle (degrees)")
@@ -108,6 +120,10 @@ def render_plots():
 
             active_plots["steering angle"] = {"canvas": canvas_steering_angle, "axis": ax_steering_angle}
 
+            if (file_live):
+                ax_steering_angle_2 = ax_steering_angle.twinx()
+                ax_steering_angle_2.plot(data2.iloc[:, 2], data2.iloc[:, 9], color = "#878787", linewidth = 0.5)
+
         pane_slip_angle.pack_forget()
         for w in pane_slip_angle.winfo_children():
             w.destroy()
@@ -115,13 +131,13 @@ def render_plots():
             pane_slip_angle.pack(fill="x", expand=True)
             fig_slip_angle = Figure(figsize = (5, 4), dpi = 100)
             ax_front_slip_angle = fig_slip_angle.add_subplot(111)
-            line_front_slip = ax_front_slip_angle.plot(data.iloc[:, 0], data.iloc[:, 8], color = "#e3ff00",
+            line_front_slip = ax_front_slip_angle.plot(data.iloc[:, 2], data.iloc[:, 10], color = "#e3ff00",
                                                     linewidth = 0.5, label = "Front Slip")
             ax_front_slip_angle.set_title("Slip Angle Plot")
             ax_front_slip_angle.set_xlabel("Time (s)")
             ax_front_slip_angle.set_ylabel("Slip Angle (degrees)")
             ax_rear_slip_angle = ax_front_slip_angle.twinx()
-            line_rear_slip = ax_rear_slip_angle.plot(data.iloc[:, 0], data.iloc[:, 9], color = "#ff00a9",
+            line_rear_slip = ax_rear_slip_angle.plot(data.iloc[:, 2], data.iloc[:, 11], color = "#ff00a9",
                                                      linewidth = 0.5, label = "Rear Slip")
 
             lines_slip = line_front_slip + line_rear_slip
@@ -135,6 +151,12 @@ def render_plots():
             active_plots["front slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_front_slip_angle}
             active_plots["rear slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_rear_slip_angle}
 
+            if (file_live):
+                ax_front_slip_angle_2 = ax_front_slip_angle.twinx()
+                ax_front_slip_angle_2.plot(data2.iloc[:, 2], data2.iloc[:, 10], color = "#a3b700", linewidth = 0.5)
+                ax_rear_slip_angle_2 = ax_front_slip_angle.twinx()
+                ax_rear_slip_angle_2.plot(data2.iloc[:, 2], data2.iloc[:, 11], color = "#ae0073", linewidth = 0.5)
+
         pane_beta.pack_forget()
         for w in pane_beta.winfo_children():
             w.destroy()
@@ -142,7 +164,7 @@ def render_plots():
             pane_beta.pack(fill="x", expand=True)
             fig_beta = Figure(figsize = (5, 4), dpi = 100)
             ax_beta = fig_beta.add_subplot(111)
-            ax_beta.plot(data.iloc[:, 0], data.iloc[:, 10], color = "#00ffd3", linewidth = 0.5)
+            ax_beta.plot(data.iloc[:, 2], data.iloc[:, 12], color = "#00ffd3", linewidth = 0.5)
             ax_beta.set_title("Beta Plot")
             ax_beta.set_xlabel("Time (s)")
             ax_beta.set_ylabel("Beta Angle (degrees)")
@@ -152,6 +174,10 @@ def render_plots():
 
             active_plots["beta"] = {"canvas": canvas_beta, "axis": ax_beta}
 
+            if (file_live):
+                ax_beta_2 = ax_beta.twinx()
+                ax_beta_2.plot(data2.iloc[:, 2], data2.iloc[:, 12], color = "#00ae90", linewidth = 0.5)
+
         pane_battery_power.pack_forget()
         for w in pane_battery_power.winfo_children():
             w.destroy()
@@ -159,7 +185,7 @@ def render_plots():
             pane_battery_power.pack(fill="x", expand=True)
             fig_battery_power = Figure(figsize = (5, 4), dpi = 100)
             ax_battery_power = fig_battery_power.add_subplot(111)
-            ax_battery_power.plot(data.iloc[:, 0], data.iloc[:, 11], color = "#ff3d00", linewidth = 0.5)
+            ax_battery_power.plot(data.iloc[:, 2], data.iloc[:, 13], color = "#ff3d00", linewidth = 0.5)
             ax_battery_power.set_title("Battery Power Plot")
             ax_battery_power.set_xlabel("Time (s)")
             ax_battery_power.set_ylabel("Battery Power (kW)")
@@ -169,6 +195,10 @@ def render_plots():
 
             active_plots["battery power"] = {"canvas": canvas_battery_power, "axis": ax_battery_power}
 
+            if (file_live):
+                ax_battery_power_2 = ax_battery_power.twinx()
+                ax_battery_power_2.plot(data2.iloc[:, 2], data2.iloc[:, 13], color = "#9e2600", linewidth = 0.5)
+
         pane_power_draw.pack_forget()
         for w in pane_power_draw.winfo_children():
             w.destroy()
@@ -176,7 +206,7 @@ def render_plots():
             pane_power_draw.pack(fill="x", expand=True)
             fig_power_draw = Figure(figsize = (5, 4), dpi = 100)
             ax_power_draw = fig_power_draw.add_subplot(111)
-            ax_power_draw.plot(data.iloc[:, 0], data.iloc[:, 13], color = "#ffff00", linewidth = 0.5)
+            ax_power_draw.plot(data.iloc[:, 2], data.iloc[:, 15], color = "#ffff00", linewidth = 0.5)
             ax_power_draw.set_title("Power Draw Plot")
             ax_power_draw.set_xlabel("Time (s)")
             ax_power_draw.set_ylabel("Power Draw (%)")
@@ -186,6 +216,10 @@ def render_plots():
 
             active_plots["power draw"] = {"canvas": canvas_power_draw, "axis": ax_power_draw}
 
+            if (file_live):
+                ax_power_draw_2 = ax_power_draw.twinx()
+                ax_power_draw_2.plot(data2.iloc[:, 2], data2.iloc[:, 15], color = "#909000", linewidth = 0.5)
+
 
 
     else:
@@ -193,10 +227,10 @@ def render_plots():
 
 
 def update_all_plots(val):
-    for plot in active_plots.values():
-        offset = float(val)
-        window_size = 10.0
+    offset = float(val)
+    window_size = 8.0
 
+    for plot in active_plots.values():
         plot["axis"].set_xlim(offset, offset + window_size)
         plot["canvas"].draw_idle()
 
@@ -272,6 +306,16 @@ def _unbind_mousewheel(event):
   canvas_data.unbind_all("<MouseWheel>")
   canvas_data.unbind_all("<Button-4>")
   canvas_data.unbind_all("<Button-5>")
+
+def play_pause_scrollbar():
+    global is_playing
+    is_playing = not is_playing
+
+    if (is_playing):
+        button_play_pause.config(text="Pause")
+        step_slider()
+    else:
+        button_play_pause.config(text="Play")
 
 
 # GRAPHICS
@@ -428,8 +472,10 @@ pane_beta = Frame(pane_scrollable, relief = "groove")
 pane_battery_power = Frame(pane_scrollable, relief = "groove")
 pane_power_draw = Frame(pane_scrollable, relief = "groove")
 
+# button_play_pause = Button(canvas_data, text = "Play", command = play_pause_scrollbar)
 slider = Scale(canvas_data, from_=0, to=100, orient="horizontal", label="Scroll", command=update_all_plots)
-slider.pack(fill="x", anchor="n", expand=True)
+# button_play_pause.pack(fill="x", anchor = "n", expand = True)
+slider.pack(fill = "x", anchor = "n", expand = True)
 
 pane.add(pane_options)
 pane.add(pane_data)
