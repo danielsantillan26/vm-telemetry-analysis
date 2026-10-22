@@ -1,11 +1,10 @@
 from tkinter import *
 from tkinter import filedialog, messagebox
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-from matplotlib.widgets import Slider
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 matplotlib.use('TkAgg')
 import pandas as pd
 from enum import IntEnum
@@ -26,7 +25,6 @@ root = Tk()
 root.title("VMTAS")
 root.iconbitmap('../img/vmtas_icon.ico')
 root.geometry('1200x800')
-root.resizable(False, False)
 
 # List of active (visible) plots
 active_plots = {}
@@ -47,6 +45,31 @@ plt.style.use('dark_background')
 # Is the scrollbar "playing?"
 is_scrollbar_playing = False
 
+# Track Map Variables
+fig_track_map = Figure(figsize=(5,4), dpi=100)
+ax_track_map = fig_track_map.add_subplot(111)
+ax_track_map_2 = ax_track_map.twinx()
+canvas_track_map = FigureCanvasTkAgg(fig_track_map)
+(track_dot_prev,) = ax_track_map.plot(
+    [], [], color="#ff0000", marker="o", markersize=12, zorder=4
+)
+(track_dot_live,) = ax_track_map.plot(
+    [], [], color="#11ff00", marker="o", markersize=12, zorder=4
+)
+
+# G-G Plot Variables
+fig_g_lat = Figure(figsize=(5,4), dpi=100)
+ax_g_lat = fig_g_lat.add_subplot(111)
+canvas_g_lat = FigureCanvasTkAgg(fig_g_lat)
+fig_g_lon = Figure(figsize=(5,4), dpi=100)
+ax_g_lon = fig_g_lon.add_subplot(111)
+canvas_g_lon = FigureCanvasTkAgg(fig_g_lon)
+(g_point_prev, ) = ax_g_lat.plot(
+    [], [], color="#ffff00", marker="o", markersize=10, zorder=2
+)
+(g_point_live, ) = ax_g_lon.plot(
+    [], [], color="#ffff00", marker="o", markersize=10, zorder=2
+)
 
 
 # FUNCTIONS
@@ -217,17 +240,57 @@ def render_plots():
     global mode
     global file_prev_data
     global file_live_data
+    global fig_track_map
+    global ax_track_map
+    global canvas_track_map
+    global fig_g_lat
+    global ax_g_lat
+    global fig_g_lon
+    global ax_g_lon
+    global canvas_g_lon
+    global canvas_g_lat
     active_plots.clear()
 
-    if (file_prev):
+    if file_prev:
         clear_data()
 
         if selected_track_map.get() == DatapointSelected.SELECTED:
-            print("Track Map Selected")
+            # TODO: Just a note, this is NOT on active plots because this should NOT be scrolling.
+            pane_track_map.pack(fill="x", expand=True)
+            ax_track_map.plot(file_prev_data.iloc[:, 0], file_prev_data.iloc[:, 1], color="#ffffff", linewidth = 5.0, zorder=3)
+            ax_track_map.set_title("Track Map")
+            canvas_track_map = FigureCanvasTkAgg(fig_track_map, master=pane_track_map)
+            canvas_track_map.draw()
+            canvas_track_map.get_tk_widget().pack(side="top", fill="both", expand=True)
+
         if selected_speed.get() == DatapointSelected.SELECTED:
             render_basic_plot(pane_speed, "speed", "Speed Plot", 5, "Speed (mph)", "#00afff", "#0075ff")
         if selected_radius.get() == DatapointSelected.SELECTED:
             render_basic_plot(pane_radius, "radius", "Radius Plot", 6, "Radius (ft)", "#ff5300", "#9b3200")
+        if selected_g_lat.get() == DatapointSelected.SELECTED:
+            # TODO: Just a note, this is NOT on active plots because this should NOT be scrolling.
+            pane_g_lat.pack(fill="x", expand=True)
+            ax_g_lat.scatter(file_prev_data.iloc[:, 7], file_prev_data.iloc[:, 8], color="#180cb9", marker="o", s=10, zorder=0)
+            ax_g_lat.set_title("G-G Plot (Prev)")
+            ax_g_lat.set_xlabel("Lateral Acceleration (g)")
+            ax_g_lat.set_ylabel("Longitudinal Acceleration (g)")
+            canvas_g_lat = FigureCanvasTkAgg(fig_g_lat, master=pane_g_lat)
+            canvas_g_lat.draw()
+            canvas_g_lat.get_tk_widget().pack(side="top", fill="both", expand=True)
+
+        if selected_g_lon.get() == DatapointSelected.SELECTED:
+            if file_live:
+                pane_g_lon.pack(fill="x", expand=True)
+                ax_g_lon.scatter(file_live_data.iloc[:, 7], file_live_data.iloc[:, 8], color="#5d0bba", marker="o", s=10, zorder=0)
+                ax_g_lon.set_title("G-G Plot (Live)")
+                ax_g_lon.set_xlabel("Lateral Acceleration (g)")
+                ax_g_lon.set_ylabel("Longitudinal Acceleration (g)")
+                canvas_g_lon = FigureCanvasTkAgg(fig_g_lon, master=pane_g_lon)
+                canvas_g_lon.draw()
+                canvas_g_lon.get_tk_widget().pack(side="top", fill="both", expand=True)
+        else:
+            selected_g_lon.set(DatapointSelected.NOT_SELECTED)
+
         if selected_steering_angle.get() == DatapointSelected.SELECTED:
             render_basic_plot(pane_steering_angle, "steering angle", "Steering Angle Plot", 9, "Angle (degrees)", "#ffffff", "#878787")
         if selected_accel_prs.get() == DatapointSelected.SELECTED:
@@ -235,7 +298,24 @@ def render_plots():
         if selected_brake_prs.get() == DatapointSelected.SELECTED:
             print("Brake Pressure Selected")
         if selected_yaw_vel.get() == DatapointSelected.SELECTED:
-            print("Yaw Velocity Selected")
+            yaw_vel_prev_data = file_prev_data.iloc[:, 5] * 1.4667 / file_prev_data.iloc[:, 6]
+            pane_yaw_vel.pack(fill="x", expand=True)
+            fig = Figure(figsize=(5, 4), dpi=100)
+            ax = fig.add_subplot(111)
+            ax.plot(file_prev_data.iloc[:, 2], yaw_vel_prev_data, color="#ab00ff", linewidth=0.5)
+            ax.set_title("Yaw Velocity Plot")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Yaw Velocity (rad/s)")
+            canvas = FigureCanvasTkAgg(fig, master=pane_yaw_vel)
+            canvas.draw()
+            canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+            active_plots["yaw velocity"] = {"canvas": canvas, "axis": ax}
+
+            if file_live:
+                yaw_vel_live_data = file_live_data.iloc[:, 5] * 1.4667 / file_live_data.iloc[:, 6]
+                ax_2 = ax.twinx()
+                ax_2.plot(file_live_data.iloc[:, 2], yaw_vel_live_data, color="610091", linewidth = 0.5)
+
         if selected_yaw_acc.get() == DatapointSelected.SELECTED:
             print("Yaw Acceleration Selected")
         if selected_slip_angle.get() == DatapointSelected.SELECTED:
@@ -270,6 +350,7 @@ def render_plots():
         if selected_slip_ratio == DatapointSelected.SELECTED:
             print("Slip Ratio Selected")
         if selected_tire_fy == DatapointSelected.SELECTED:
+            # TODO: Ask about the tyre model
             print("Tire Fy Selected")
         if selected_roll_grad.get() == DatapointSelected.SELECTED:
             print("Roll Grad Selected")
@@ -316,6 +397,38 @@ def update_all_plots(val):
     for plot in active_plots.values():
         plot["axis"].set_xlim(offset, offset + window_size)
         plot["canvas"].draw_idle()
+
+    time_col_prev = file_prev_data.iloc[:, 2].to_numpy()
+    time_col_prev = pd.to_numeric(file_prev_data.iloc[:, 2], errors="coerce").to_numpy(
+        dtype=float
+    )
+    closest_prev_row = np.nanargmin(np.abs(time_col_prev - float(val)))
+
+    time_col_live = file_live_data.iloc[:, 2].to_numpy() if file_live else None
+    time_col_live = pd.to_numeric(file_live_data.iloc[:, 2], errors="coerce").to_numpy(
+        dtype=float
+    ) if file_live else None
+    closest_live_row = np.nanargmin(np.abs(time_col_live - float(val))) if file_live else None
+
+    if (selected_track_map.get() == DatapointSelected.SELECTED):
+        prev_x = file_prev_data.iloc[closest_prev_row, 0]
+        prev_y = file_prev_data.iloc[closest_prev_row, 1]
+        track_dot_prev.set_data([prev_x], [prev_y])
+
+        if (file_live):
+            live_x = file_live_data.iloc[closest_live_row, 0]
+            live_y = file_live_data.iloc[closest_live_row, 1]
+            track_dot_live.set_data([live_x], [live_y])
+
+        canvas_track_map.draw()
+
+    if (selected_g_lat.get() == DatapointSelected.SELECTED):
+        g_point_prev.set_data([file_prev_data.iloc[closest_prev_row, 7]], [file_prev_data.iloc[closest_prev_row, 8]])
+        canvas_g_lat.draw()
+
+    if (selected_g_lon.get() == DatapointSelected.SELECTED):
+        g_point_live.set_data([file_live_data.iloc[closest_live_row, 7]], [file_live_data.iloc[closest_live_row, 8]])
+        canvas_g_lon.draw()
 
 def animate_slider():
     global is_scrollbar_playing
@@ -450,8 +563,8 @@ selected_power_draw = IntVar(value=DatapointSelected.NOT_SELECTED)
 check_track_map = Checkbutton(pane_options_scrollable, text="Track Map", anchor="w", justify="left", variable=selected_track_map)
 check_speed = Checkbutton(pane_options_scrollable, text="Vehicle Speed", anchor="w", justify="left", variable=selected_speed)
 check_radius = Checkbutton(pane_options_scrollable, text="Radius", anchor="w", justify="left", variable=selected_radius)
-check_g_lat = Checkbutton(pane_options_scrollable, text="Lateral G-Force", anchor="w", justify="left", variable=selected_g_lat)
-check_g_lon = Checkbutton(pane_options_scrollable, text="Longitudinal G-Force", anchor="w", justify="left", variable=selected_g_lon)
+check_g_lat = Checkbutton(pane_options_scrollable, text="G-Force (File 1)", anchor="w", justify="left", variable=selected_g_lat)
+check_g_lon = Checkbutton(pane_options_scrollable, text="G-Force (File 2)", anchor="w", justify="left", variable=selected_g_lon)
 check_steering_angle = Checkbutton(pane_options_scrollable, text="Steering Angle", anchor="w", justify="left", variable=selected_steering_angle)
 check_accel_prs = Checkbutton(pane_options_scrollable, text="Acceleration Pressure", anchor="w", justify="left", variable=selected_accel_prs)
 check_brake_prs = Checkbutton(pane_options_scrollable, text="Brake Pressure", anchor="w", justify="left", variable=selected_brake_prs)
@@ -530,7 +643,7 @@ pane_beta = Frame(pane_data_scrollable, relief="groove")
 pane_battery_power = Frame(pane_data_scrollable, relief="groove")
 pane_power_draw = Frame(pane_data_scrollable, relief="groove")
 
-slider = Scale(canvas_data, from_=0, to=100, orient="horizontal", label="Scroll", command=update_all_plots, resolution=0.25)
+slider = Scale(canvas_data, from_=0, to=100, orient="horizontal", label="Scroll", command=update_all_plots, resolution=0.001)
 slider.pack(fill = "x", anchor = "n")
 button_slider_play_pause = Button(canvas_data, text="Play", justify="center", width=6, height=1, command=play_pause_scrollbar)
 button_slider_play_pause.pack(fill="x", anchor="nw")
