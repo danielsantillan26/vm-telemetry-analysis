@@ -97,6 +97,7 @@ def open_prev_file_dialog():
         print(f"Selected File (First Slot): {file_path}")
         file_prev = file_path
         file_prev_data = pd.read_csv(file_prev)
+        label_choose_prev_file.config(text=f"Selected File: {file_path.rsplit('/', 1)[-1]}")
     else:
         print("No file selected")
 
@@ -111,6 +112,7 @@ def open_live_file_dialog():
         print(f"Selected File (Second Slot): {file_path}")
         file_live = file_path
         file_live_data = pd.read_csv(file_live)
+        label_choose_live_file.config(text=f"Selected File: {file_path.rsplit('/', 1)[-1]}")
     else:
         print("No file selected")
 
@@ -120,6 +122,7 @@ def reset_prev():
     file_prev = None
     file_prev_data = None
     clear_data()
+    label_choose_prev_file.config(text="Choose Previous Run .csv")
 
 def reset_live():
     global file_live
@@ -127,6 +130,7 @@ def reset_live():
     file_live = None
     file_live_data = None
     clear_data()
+    label_choose_live_file.config(text="Choose Live/Previous Run .csv")
 
 def clear_data():
     pane_track_map.pack_forget()
@@ -302,7 +306,7 @@ def render_plots():
             pane_yaw_vel.pack(fill="x", expand=True)
             fig = Figure(figsize=(5, 4), dpi=100)
             ax = fig.add_subplot(111)
-            ax.plot(file_prev_data.iloc[:, 2], yaw_vel_prev_data, color="#ab00ff", linewidth=0.5)
+            ax.plot(file_prev_data.iloc[:, 2], yaw_vel_prev_data, color="#610091", linewidth=0.5)
             ax.set_title("Yaw Velocity Plot")
             ax.set_xlabel("Time (s)")
             ax.set_ylabel("Yaw Velocity (rad/s)")
@@ -314,7 +318,7 @@ def render_plots():
             if file_live:
                 yaw_vel_live_data = file_live_data.iloc[:, 5] * 1.4667 / file_live_data.iloc[:, 6]
                 ax_2 = ax.twinx()
-                ax_2.plot(file_live_data.iloc[:, 2], yaw_vel_live_data, color="610091", linewidth = 0.5)
+                ax_2.plot(file_live_data.iloc[:, 2], yaw_vel_live_data, color="#ab00ff", linewidth = 0.5)
 
         if selected_yaw_acc.get() == DatapointSelected.SELECTED:
             print("Yaw Acceleration Selected")
@@ -322,13 +326,13 @@ def render_plots():
             pane_slip_angle.pack(fill="x", expand=True)
             fig_slip_angle = Figure(figsize=(5, 4), dpi=100)
             ax_front_slip_angle = fig_slip_angle.add_subplot(111)
-            line_front_slip = ax_front_slip_angle.plot(file_prev_data.iloc[:, 2], file_prev_data.iloc[:, 10], color="#e3ff00",
+            line_front_slip = ax_front_slip_angle.plot(file_prev_data.iloc[:, 2], file_prev_data.iloc[:, 10], color="#a3b700",
                                                        linewidth=0.5, label="Front Slip")
             ax_front_slip_angle.set_title("Slip Angle Plot")
             ax_front_slip_angle.set_xlabel("Time (s)")
             ax_front_slip_angle.set_ylabel("Slip Angle (degrees)")
             ax_rear_slip_angle = ax_front_slip_angle.twinx()
-            line_rear_slip = ax_rear_slip_angle.plot(file_prev_data.iloc[:, 2], file_prev_data.iloc[:, 11], color="#ff00a9",
+            line_rear_slip = ax_rear_slip_angle.plot(file_prev_data.iloc[:, 2], file_prev_data.iloc[:, 11], color="#ae0073",
                                                      linewidth=0.5, label="Rear Slip")
 
             lines_slip = line_front_slip + line_rear_slip
@@ -344,9 +348,9 @@ def render_plots():
 
             if (file_live):
                 ax_front_slip_angle_2 = ax_front_slip_angle.twinx()
-                ax_front_slip_angle_2.plot(file_live_data.iloc[:, 2], file_live_data.iloc[:, 10], color="#a3b700", linewidth=0.5)
+                ax_front_slip_angle_2.plot(file_live_data.iloc[:, 2], file_live_data.iloc[:, 10], color="#e3ff00", linewidth=0.5)
                 ax_rear_slip_angle_2 = ax_front_slip_angle.twinx()
-                ax_rear_slip_angle_2.plot(file_live_data.iloc[:, 2], file_live_data.iloc[:, 11], color="#ae0073", linewidth=0.5)
+                ax_rear_slip_angle_2.plot(file_live_data.iloc[:, 2], file_live_data.iloc[:, 11], color="#ff00a9", linewidth=0.5)
         if selected_slip_ratio == DatapointSelected.SELECTED:
             print("Slip Ratio Selected")
         if selected_tire_fy == DatapointSelected.SELECTED:
@@ -367,7 +371,7 @@ def render_plots():
 
 
 # Basic Render Function
-def render_basic_plot(pane, name, title, ycol, ylabel, color_prev, color_live):
+def render_basic_plot(pane, name, title, ycol, ylabel, color_live, color_prev):
     global file_live
     global file_live_data
     global file_prev_data
