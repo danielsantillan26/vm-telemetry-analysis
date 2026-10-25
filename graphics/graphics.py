@@ -10,6 +10,7 @@ import pandas as pd
 from enum import IntEnum
 import sys
 
+# TODO: Consider getting rid of the mode altogether.
 class Mode(IntEnum):
     NONE = 0
     PREVIOUS_RUN = 1
@@ -313,7 +314,7 @@ def render_plots():
             canvas = FigureCanvasTkAgg(fig, master=pane_yaw_vel)
             canvas.draw()
             canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
-            active_plots["yaw velocity"] = {"canvas": canvas, "axis": ax}
+            active_plots["yaw velocity"] = {"canvas": canvas, "axis": ax, "line": ax.axvline(x=0, color="red", linestyle="-", linewidth=1)}
 
             if file_live:
                 yaw_vel_live_data = file_live_data.iloc[:, 5] * 1.4667 / file_live_data.iloc[:, 6]
@@ -343,7 +344,7 @@ def render_plots():
             canvas_slip_angle.draw()
             canvas_slip_angle.get_tk_widget().pack(side=TOP, fill=BOTH, expand=True)
 
-            active_plots["front slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_front_slip_angle}
+            active_plots["front slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_front_slip_angle, "line": ax_front_slip_angle.axvline(x=0, color="red", linestyle="-", linewidth=1)}
             active_plots["rear slip angle"] = {"canvas": canvas_slip_angle, "axis": ax_rear_slip_angle}
 
             if (file_live):
@@ -386,7 +387,7 @@ def render_basic_plot(pane, name, title, ycol, ylabel, color_live, color_prev):
     canvas = FigureCanvasTkAgg(fig, master=pane)
     canvas.draw()
     canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
-    active_plots[name] = {"canvas": canvas, "axis": ax}
+    active_plots[name] = {"canvas": canvas, "axis": ax, "line": ax.axvline(x=0, color="red", linestyle="-", linewidth=1)}
 
     if (file_live):
         ax_2 = ax.twinx()
@@ -396,11 +397,15 @@ def render_basic_plot(pane, name, title, ycol, ylabel, color_live, color_prev):
 # Updating Graphics with Slider
 def update_all_plots(val):
     offset = float(val)
+    if offset >= 4: offset -= 4
+    else: offset = 0
     window_size = 8.0
 
     for plot in active_plots.values():
         plot["axis"].set_xlim(offset, offset + window_size)
         plot["canvas"].draw_idle()
+        if plot["line"]:
+            plot["line"].set_xdata([float(val), float(val)])
 
     time_col_prev = file_prev_data.iloc[:, 2].to_numpy()
     time_col_prev = pd.to_numeric(file_prev_data.iloc[:, 2], errors="coerce").to_numpy(
@@ -438,7 +443,6 @@ def animate_slider():
     global is_scrollbar_playing
 
     current_val = slider.get()
-    print(current_val)
     should_move = False
     if is_scrollbar_playing:
         if current_val < float(slider.cget("to")):
