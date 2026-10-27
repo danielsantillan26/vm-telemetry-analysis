@@ -5,16 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from scipy.signal import savgol_filter
+
 matplotlib.use('TkAgg')
 import pandas as pd
 from enum import IntEnum
 import sys
-
-# TODO: Consider getting rid of the mode altogether.
-class Mode(IntEnum):
-    NONE = 0
-    PREVIOUS_RUN = 1
-    LIVE_RUN = 2
 
 class DatapointSelected(IntEnum):
     NOT_SELECTED = 0
@@ -37,8 +33,6 @@ file_live = None
 file_prev_data = None
 # Data from "live" .csv file
 file_live_data = None
-# Variable defining the mode
-mode = Mode.NONE
 # Basic Plot Setup
 Plot, Axis = plt.subplots()
 plt.subplots_adjust(bottom=0.25)
@@ -74,18 +68,6 @@ canvas_g_lon = FigureCanvasTkAgg(fig_g_lon)
 
 
 # FUNCTIONS
-
-# Mode Selection
-def mode_selection():
-    """Determine the selected software mode and modify software options."""
-    global mode
-    mode_choice = mode_choice_var.get()
-    if mode_choice == Mode.LIVE_RUN:
-        mode = Mode.LIVE_RUN
-        print("Live Run")
-    elif mode_choice == Mode.PREVIOUS_RUN:
-        mode = Mode.PREVIOUS_RUN
-        print("Previous Run Review")
 
 # File functions
 def open_prev_file_dialog():
@@ -260,7 +242,6 @@ def render_plots():
         clear_data()
 
         if selected_track_map.get() == DatapointSelected.SELECTED:
-            # TODO: Just a note, this is NOT on active plots because this should NOT be scrolling.
             pane_track_map.pack(fill="x", expand=True)
             ax_track_map.plot(file_prev_data.iloc[:, 0], file_prev_data.iloc[:, 1], color="#ffffff", linewidth = 5.0, zorder=3)
             ax_track_map.set_title("Track Map")
@@ -273,10 +254,9 @@ def render_plots():
         if selected_radius.get() == DatapointSelected.SELECTED:
             render_basic_plot(pane_radius, "radius", "Radius Plot", 6, "Radius (ft)", "#ff5300", "#9b3200")
         if selected_g_lat.get() == DatapointSelected.SELECTED:
-            # TODO: Just a note, this is NOT on active plots because this should NOT be scrolling.
             pane_g_lat.pack(fill="x", expand=True)
             ax_g_lat.scatter(file_prev_data.iloc[:, 7], file_prev_data.iloc[:, 8], color="#180cb9", marker="o", s=10, zorder=0)
-            ax_g_lat.set_title("G-G Plot (Prev)")
+            ax_g_lat.set_title("G-G Plot (File 1)")
             ax_g_lat.set_xlabel("Lateral Acceleration (g)")
             ax_g_lat.set_ylabel("Longitudinal Acceleration (g)")
             canvas_g_lat = FigureCanvasTkAgg(fig_g_lat, master=pane_g_lat)
@@ -287,7 +267,7 @@ def render_plots():
             if file_live:
                 pane_g_lon.pack(fill="x", expand=True)
                 ax_g_lon.scatter(file_live_data.iloc[:, 7], file_live_data.iloc[:, 8], color="#5d0bba", marker="o", s=10, zorder=0)
-                ax_g_lon.set_title("G-G Plot (Live)")
+                ax_g_lon.set_title("G-G Plot (File 2)")
                 ax_g_lon.set_xlabel("Lateral Acceleration (g)")
                 ax_g_lon.set_ylabel("Longitudinal Acceleration (g)")
                 canvas_g_lon = FigureCanvasTkAgg(fig_g_lon, master=pane_g_lon)
@@ -320,9 +300,41 @@ def render_plots():
                 yaw_vel_live_data = file_live_data.iloc[:, 5] * 1.4667 / file_live_data.iloc[:, 6]
                 ax_2 = ax.twinx()
                 ax_2.plot(file_live_data.iloc[:, 2], yaw_vel_live_data, color="#ab00ff", linewidth = 0.5)
+                active_plots["yaw velocity"]["live"] = ax_2
 
         if selected_yaw_acc.get() == DatapointSelected.SELECTED:
-            print("Yaw Acceleration Selected")
+            pane_yaw_acc.pack(fill="x", expand=True)
+            t = file_prev_data.iloc[:, 2].to_numpy()
+            yaw_vel = (
+                    file_prev_data.iloc[:, 5] * 1.4667 / file_prev_data.iloc[:, 6]
+            ).to_numpy()
+
+            dt = np.mean(np.diff(t))
+            yaw_accel = savgol_filter(yaw_vel, window_length=15, polyorder=2, deriv=1, delta=dt)
+
+            fig = plt.figure(figsize=(5, 4), dpi=100)
+            ax = fig.add_subplot(111)
+            ax.plot(t, yaw_accel, color="#579e00", linewidth = 0.5)
+            ax.set_title("Yaw Acceleration Plot")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Yaw Acceleration (rad/s^2)")
+            canvas = FigureCanvasTkAgg(fig, master=pane_yaw_acc)
+            canvas.draw()
+            canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+            active_plots["yaw acceleration"] = {"canvas": canvas, "axis": ax,
+                                            "line": ax.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+
+            if file_live:
+                t2 = file_live_data.iloc[:, 2].to_numpy()
+                yaw_vel_2 = (
+                        file_live_data.iloc[:, 5] * 1.4667 / file_live_data.iloc[:, 6]
+                ).to_numpy()
+                yaw_acc_2 = savgol_filter(yaw_vel_2, window_length=15, polyorder=2, deriv=1, delta=dt)
+
+                ax_2 = ax.twinx()
+                ax_2.plot(t2, yaw_acc_2, color="#8bff00", linewidth = 0.5)
+
+
         if selected_slip_angle.get() == DatapointSelected.SELECTED:
             pane_slip_angle.pack(fill="x", expand=True)
             fig_slip_angle = Figure(figsize=(5, 4), dpi=100)
@@ -506,24 +518,6 @@ canvas_options.bind("<Enter>", options_bind_mousewheel)
 canvas_options.bind("<Leave>", options_unbind_mousewheel)
 
 # Adding Labels/Selection
-label_choose_mode = Label(pane_options_scrollable, text="Mode Selection", font=("Segoe UI", 12), activeforeground="black",
-                          anchor="w", justify="left")
-label_choose_mode.grid(row=0, column=0, padx=5, pady=5, sticky="w")
-
-
-mode_choice_var = IntVar()
-mode_choice_var.set(Mode.LIVE_RUN)
-radio_live = Radiobutton(pane_options_scrollable, text="Live Run", variable = mode_choice_var, value=Mode.LIVE_RUN,
-                         padx = 0, pady = 0, bd = 0, anchor ="w", justify ="left")
-radio_previous = Radiobutton(pane_options_scrollable, text="Previous Run Review", variable = mode_choice_var,
-                             value=Mode.PREVIOUS_RUN, padx = 0, pady = 0, bd = 0, anchor ="w", justify ="left")
-radio_live.grid(row=1, column=0, padx=5, pady=3, sticky="w")
-radio_previous.grid(row=2, column=0, padx=5, pady=3, sticky="w")
-button_mode_choice = Button(pane_options_scrollable, text="Confirm", command=mode_selection, justify="center", width=7,
-                            height=1)
-button_mode_choice.grid(row=3, column=0, padx=4, pady=3, sticky="w")
-
-
 label_choose_prev_file = Label(pane_options_scrollable, text="Choose Previous Run .csv", font=("Segoe UI", 12),
                                activeforeground = "black", anchor = "w", justify = "left")
 label_choose_prev_file.grid(row=5, column=0, padx=5, pady=5, sticky="w")

@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="identifier.sqlite" uuid="dbd5d4b1-9db2-4eb9-8668-050762b607a8">
+    <data-source source="LOCAL" name="userdata.db" uuid="6b19dc31-eccc-473e-b66a-49d15fc8d5a9">
       <driver-ref>sqlite.xerial</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:identifier.sqlite</jdbc-url>
-      <working-dir>$ProjectFileDir$</working-dir>
-    </data-source>
-    <data-source source="LOCAL" name="userdata" uuid="8f3c49e6-3d84-4431-8653-2c9b9af40192">
-      <driver-ref>sqlite.xerial</driver-ref>
-      <synchronize>true</synchronize>
-      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
-      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/logins/userdata.db</jdbc-url>
+      <jdbc-url>jdbc:sqlite:C:\Users\danie\PycharmProjects\vm-datavis\logins\userdata.db</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
