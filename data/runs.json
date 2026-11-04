@@ -1,0 +1,10 @@
+{
+    "Aero Traces": {
+        "stored_path": "C:\\Users\\danie\\PycharmProjects\\vm-datavis\\data\\4e13a6c203594901a38a25b07e0c92c5.csv",
+        "original_filename": "traces_aero.csv"
+    },
+    "No Aero Traces": {
+        "stored_path": "C:\\Users\\danie\\PycharmProjects\\vm-datavis\\data\\2cf6a7082e9345d5b4ebd25be6463906.csv",
+        "original_filename": "traces_noaero.csv"
+    }
+}
