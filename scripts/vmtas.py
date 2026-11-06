@@ -17,7 +17,6 @@ import shutil
 import uuid
 from pathlib import Path
 
-
 window_titles = [
     "VMTAS",
     "VMTAS File Addition",
@@ -133,6 +132,12 @@ class MainWindow(QMainWindow):
         self.window_options.show_track_map.connect(
             lambda state: self.handle_track_map(state)
         )
+        self.window_options.show_run_1_speed_heatmap.connect(
+            lambda state: self.handle_file_1_heatmap(state)
+        )
+        self.window_options.show_run_2_speed_heatmap.connect(
+            lambda state: self.handle_file_2_heatmap(state)
+        )
 
     def _build_stats_ui(self):
         self.splitter_data.addWidget(QWidget())
@@ -169,6 +174,18 @@ class MainWindow(QMainWindow):
             self.window_data.build_track_map(self.active_run_1, self.active_run_2)
         else:
             self.window_data.destroy_track_map()
+
+    def handle_file_1_heatmap(self, to_build: bool):
+        if to_build:
+            self.window_data.build_file_1_heatmap(self.active_run_1)
+        else:
+            self.window_data.destroy_file_1_heatmap()
+
+    def handle_file_2_heatmap(self, to_build: bool):
+        if to_build:
+            self.window_data.build_file_2_heatmap(self.active_run_2)
+        else:
+            self.window_data.destroy_file_2_heatmap()
 
 
 
@@ -627,9 +644,26 @@ class MplCanvas(FigureCanvas):
 
 
 class DataWindow(QWidget):
-    widget_track_map: QWidget | None = None
-    layout_widgets: QVBoxLayout | None = None
+    df1: pd.DataFrame | None = None
+    df2: pd.DataFrame | None = None
     layout: QVBoxLayout
+    layout_widgets: QVBoxLayout | None = None
+
+    widget_track_map: QWidget | None = None
+    track_dot_1 = None
+    track_dot_2 = None
+    layout_track_map: QVBoxLayout | None = None
+    canvas_track_map: MplCanvas | None = None
+
+    widget_file_1_heatmap: QWidget | None = None
+    heat_track_dot_1 = None
+    layout_file_1_heatmap: QVBoxLayout | None = None
+    canvas_file_1_heatmap: MplCanvas | None = None
+
+    widget_file_2_heatmap: QWidget | None = None
+    heat_track_dot_2 = None
+    layout_file_2_heatmap: QVBoxLayout | None = None
+    canvas_file_2_heatmap: MplCanvas | None = None
 
     slider: QSlider
     label_slider: QLabel
@@ -645,6 +679,7 @@ class DataWindow(QWidget):
 
     def _build_ui(self):
         self.layout = QVBoxLayout()
+
         layout_slider = QHBoxLayout()
         self.button_slider = QPushButton("Play")
         self.button_slider.clicked.connect(self._on_slider_play)
@@ -658,11 +693,18 @@ class DataWindow(QWidget):
         layout_slider.addWidget(self.slider)
         layout_slider.addWidget(self.label_slider)
         self.layout.addLayout(layout_slider)
+
         self.layout_widgets = QVBoxLayout()
+
         scroll_area_data = QScrollArea()
         scroll_area_data.setWidgetResizable(True)
-        scroll_area_data.setLayout(self.layout_widgets)
-        scroll_area_data.setMinimumSize(750, 425)
+        scroll_area_data.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area_data.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+        container_widget = QWidget()
+        self.layout_widgets = QVBoxLayout(container_widget)
+        scroll_area_data.setWidget(container_widget)
+        self.layout_widgets.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.layout.addWidget(scroll_area_data)
 
         self.playback_timer = QTimer(self)
@@ -674,7 +716,6 @@ class DataWindow(QWidget):
         self.playback_speed: float = 1.0
         self.ticks_per_second: float = 100.0
 
-        self.layout.addStretch()
         self.setLayout(self.layout)
 
     def update_slider_max(self, max_value: int):
@@ -686,23 +727,30 @@ class DataWindow(QWidget):
         seconds = value / self.TIME_SCALE
         if self.label_slider is not None:
             self.label_slider.setText(f"{seconds:.2f} s")
+            self.update_dots(seconds)
+            self.update_file_1_dot(seconds)
+            self.update_file_2_dot(seconds)
 
     def _on_slider_play(self):
-        if self.playback_timer.isActive():
-            self.playback_timer.stop()
-        else:
-            if self.slider.value() >= self.slider.maximum():
-                self.slider.setValue(0)
-
-            self._play_start_real_time = time.perf_counter()
-            self._slider_start_value = self.slider.value()
-            self.playback_timer.start()
+        if self.slider.maximum() == 0:
+            return
 
         self.is_slider_playing = not self.is_slider_playing
         if self.is_slider_playing:
             self.button_slider.setText("Pause")
         else:
             self.button_slider.setText("Play")
+
+        if self.playback_timer.isActive():
+            self.playback_timer.stop()
+        else:
+            if self.slider.value() >= self.slider.maximum():
+                self.slider.setValue(0)
+                self.is_slider_playing = not self.is_slider_playing
+
+            self._play_start_real_time = time.perf_counter()
+            self._slider_start_value = self.slider.value()
+            self.playback_timer.start()
 
     def _step_forward(self):
         current = self.slider.value()
@@ -731,22 +779,195 @@ class DataWindow(QWidget):
 
         if isinstance(df1, pd.DataFrame) or isinstance(df2, pd.DataFrame):
             target_df = df1 if isinstance(df1, pd.DataFrame) else df2
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
             self.widget_track_map = QWidget()
-            layout = QVBoxLayout()
-            canvas = MplCanvas(parent=None, width=5, height=4, dpi=100)
-            canvas.axes.scatter(target_df.iloc[:, 0], target_df.iloc[:, 1], color="#FFFFFF", s=20)
-            canvas.axes.axis('off')
-            canvas.draw()
-            layout.addWidget(canvas)  # type: ignore
-            self.widget_track_map.setLayout(layout) # type: ignore
-            self.layout_widgets.addWidget(self.widget_track_map) # type: ignore
+            self.widget_track_map.setMinimumHeight(200)
+            self.layout_track_map = QVBoxLayout()
+            self.canvas_track_map = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_track_map.axes.scatter(target_df.iloc[:, 0], target_df.iloc[:, 1], color="#FFFFFF", s=20)
+            self.canvas_track_map.axes.axis('off')
+
+            self.track_dot_1 = self.canvas_track_map.axes.plot([], [], color="#ff0000", marker="o", markersize=12, zorder=4, animated=True)[0] \
+                if isinstance(df1, pd.DataFrame) else None
+            self.track_dot_2 = self.canvas_track_map.axes.plot([], [], color="#11ff00", marker="o", markersize=12, zorder=4, animated=True)[0] \
+                if isinstance(df2, pd.DataFrame) else None
+
+            self.bg_track_map = None
+
+            def _on_draw(event):
+                self.bg_track_map = self.canvas_track_map.copy_from_bbox(
+                    self.canvas_track_map.axes.bbox
+                )
+                if self.track_dot_1:
+                    self.canvas_track_map.axes.draw_artist(self.track_dot_1)
+                if self.track_dot_2:
+                    self.canvas_track_map.axes.draw_artist(self.track_dot_2)
+
+            self.canvas_track_map.mpl_connect("draw_event", _on_draw)
+            self.canvas_track_map.draw()
+            self.layout_track_map.addWidget(self.canvas_track_map)  # type: ignore
+
+            self.widget_track_map.setLayout(self.layout_track_map) # type: ignore
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_track_map)
 
     def destroy_track_map(self):
         if self.widget_track_map is not None:
-            self.layout_widgets.removeWidget(self.widget_track_map) # type: ignore
-            self.widget_track_map.hide() # type: ignore
-            self.widget_track_map.deleteLater() # type: ignore
+            self.track_dot_1 = None
+            self.track_dot_2 = None
+            self.canvas_track_map = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_track_map)
+            self.widget_track_map.hide()
+            self.widget_track_map.deleteLater()
             self.widget_track_map = None
+
+    def build_file_1_heatmap(self, df1: pd.DataFrame | None):
+        self.destroy_file_1_heatmap()
+
+        if isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_file_1_heatmap = QWidget()
+            self.widget_file_1_heatmap.setMinimumHeight(200)
+            self.layout_file_1_heatmap = QVBoxLayout()
+            self.canvas_file_1_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            speed_values = pd.to_numeric(self.df1.iloc[:, 5], errors="coerce")
+            scatter_plot = self.canvas_file_1_heatmap.axes.scatter(self.df1.iloc[:, 0], self.df1.iloc[:, 1], c=speed_values, cmap="turbo_r", s=20)
+            self.heat_track_dot_1 = self.canvas_file_1_heatmap.axes.plot([], [], color="white", marker="o", markersize=12, zorder=4, animated=True)[0]
+            self.canvas_file_1_heatmap.axes.axis('off')
+
+            self.bg_file_1_heatmap = None
+
+            def on_draw(event):
+                self.bg_file_1_heatmap = self.canvas_file_1_heatmap.copy_from_bbox(
+                    self.canvas_file_1_heatmap.axes.bbox
+                )
+                if self.heat_track_dot_1:
+                    self.canvas_file_1_heatmap.axes.draw_artist(self.heat_track_dot_1)
+
+            self.canvas_file_1_heatmap.mpl_connect("draw_event", on_draw)
+            self.canvas_file_1_heatmap.draw()
+            self.layout_file_1_heatmap.addWidget(self.canvas_file_1_heatmap) # type: ignore
+            self.widget_file_1_heatmap.setLayout(self.layout_file_1_heatmap) # type: ignore
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_file_1_heatmap)
+
+    def destroy_file_1_heatmap(self):
+        if self.widget_file_1_heatmap is not None:
+            self.heat_track_dot_1 = None
+            self.canvas_file_1_heatmap = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_file_1_heatmap)
+            self.widget_file_1_heatmap.hide()
+            self.widget_file_1_heatmap.deleteLater()
+            self.widget_file_1_heatmap = None
+
+    def build_file_2_heatmap(self, df2: pd.DataFrame | None):
+        self.destroy_file_2_heatmap()
+
+        if isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_file_2_heatmap = QWidget()
+            self.widget_file_2_heatmap.setMinimumHeight(200)
+            self.layout_file_2_heatmap = QVBoxLayout()
+            self.canvas_file_2_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            speed_values = pd.to_numeric(self.df2.iloc[:, 5], errors="coerce")
+            scatter_plot = self.canvas_file_2_heatmap.axes.scatter(self.df2.iloc[:, 0], self.df2.iloc[:, 1], c=speed_values, cmap="turbo_r", s=20)
+            self.heat_track_dot_2 = self.canvas_file_2_heatmap.axes.plot([], [], color="white", marker="o", markersize=12, zorder=4, animated=True)[0]
+            self.canvas_file_2_heatmap.axes.axis('off')
+
+            self.bg_file_2_heatmap = None
+
+            def on_draw(event):
+                self.bg_file_2_heatmap = self.canvas_file_2_heatmap.copy_from_bbox(
+                    self.canvas_file_2_heatmap.axes.bbox
+                )
+                if self.heat_track_dot_2:
+                    self.canvas_file_2_heatmap.axes.draw_artist(self.heat_track_dot_2)
+
+            self.canvas_file_2_heatmap.mpl_connect("draw_event", on_draw)
+            self.canvas_file_2_heatmap.draw()
+            self.layout_file_2_heatmap.addWidget(self.canvas_file_2_heatmap)  # type: ignore
+            self.widget_file_2_heatmap.setLayout(self.layout_file_2_heatmap)  # type: ignore
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_file_2_heatmap)
+
+
+    def destroy_file_2_heatmap(self):
+        if self.widget_file_2_heatmap is not None:
+            self.heat_track_dot_2 = None
+            self.canvas_file_2_heatmap = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_file_2_heatmap)
+            self.widget_file_2_heatmap.hide()
+            self.widget_file_2_heatmap.deleteLater()
+            self.widget_file_2_heatmap = None
+
+    def update_dots(self, cur_time: float):
+        if (
+            self.canvas_track_map is None or self.widget_track_map is None or self.bg_track_map is None
+        ):
+            return
+
+        self.canvas_track_map.restore_region(self.bg_track_map)
+
+        if self.track_dot_1 is not None and self.df1 is not None:
+            time_col = pd.to_numeric(self.df1.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df1.iloc[closest_row, 0]
+            y = self.df1.iloc[closest_row, 1]
+            self.track_dot_1.set_data([x], [y]) # type: ignore
+            self.canvas_track_map.axes.draw_artist(self.track_dot_1)
+        if self.track_dot_2 is not None and self.df2 is not None:
+            time_col = pd.to_numeric(self.df2.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df2.iloc[closest_row, 0]
+            y = self.df2.iloc[closest_row, 1]
+            self.track_dot_2.set_data([x], [y]) # type: ignore
+            self.canvas_track_map.axes.draw_artist(self.track_dot_2)
+
+        self.canvas_track_map.blit(self.canvas_track_map.axes.bbox)
+
+    def update_file_1_dot(self, cur_time: float):
+        if (
+            self.canvas_file_1_heatmap is None or self.widget_file_1_heatmap is None or self.bg_file_1_heatmap is None
+        ):
+            return
+
+        self.canvas_file_1_heatmap.restore_region(self.bg_file_1_heatmap)
+
+        if self.heat_track_dot_1 is not None and self.df1 is not None:
+            time_col = pd.to_numeric(self.df1.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df1.iloc[closest_row, 0]
+            y = self.df1.iloc[closest_row, 1]
+            self.heat_track_dot_1.set_data([x], [y])
+            self.canvas_file_1_heatmap.axes.draw_artist(self.heat_track_dot_1)
+
+        self.canvas_file_1_heatmap.blit(self.canvas_file_1_heatmap.axes.bbox)
+
+    def update_file_2_dot(self, cur_time: float):
+        if(
+            self.canvas_file_2_heatmap is None or self.widget_file_2_heatmap is None or self.bg_file_2_heatmap is None
+        ):
+            return
+
+        self.canvas_file_2_heatmap.restore_region(self.bg_file_2_heatmap)
+
+        if self.heat_track_dot_2 is not None and self.df2 is not None:
+            time_col = pd.to_numeric(self.df2.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df2.iloc[closest_row, 0]
+            y = self.df2.iloc[closest_row, 1]
+            self.heat_track_dot_2.set_data([x], [y])
+            self.canvas_file_2_heatmap.axes.draw_artist(self.heat_track_dot_2)
+
+        self.canvas_file_2_heatmap.blit(self.canvas_file_2_heatmap.axes.bbox)
+
 
 
 
