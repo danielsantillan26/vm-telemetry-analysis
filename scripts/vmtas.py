@@ -4,10 +4,13 @@ import time
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from PyQt6.QtCore import QSize, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QVBoxLayout, QLabel, QFileDialog, \
-    QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QSplitter, QCheckBox, QSlider
+    QComboBox, QLineEdit, QMessageBox, QHBoxLayout, QSplitter, QCheckBox, QSlider, QScrollArea
 
 import json
 import shutil
@@ -40,7 +43,7 @@ def save_runs(runs_dict):
     with open(RUN_REGISTRY_FILE, "w", encoding="utf-8") as f:
         json.dump(runs_dict, f, indent=4)
 
-
+plt.style.use('dark_background')
 
 
 class MainWindow(QMainWindow):
@@ -127,6 +130,9 @@ class MainWindow(QMainWindow):
 
         self.window_file.run_1_updated.connect(self.handle_run_1_update)
         self.window_file.run_2_updated.connect(self.handle_run_2_update)
+        self.window_options.show_track_map.connect(
+            lambda state: self.handle_track_map(state)
+        )
 
     def _build_stats_ui(self):
         self.splitter_data.addWidget(QWidget())
@@ -134,10 +140,12 @@ class MainWindow(QMainWindow):
     def handle_run_1_update(self, df: pd.DataFrame | None):
         self.active_run_1 = df
         self.rework_slider()
+        self.window_options.reemit_signals()
 
     def handle_run_2_update(self, df: pd.DataFrame | None):
         self.active_run_2 = df
         self.rework_slider()
+        self.window_options.reemit_signals()
 
     def rework_slider(self):
         candidates = []
@@ -155,6 +163,13 @@ class MainWindow(QMainWindow):
             self.window_data.update_slider_max(overall_max)
         else:
             self.window_data.update_slider_max(0)
+
+    def handle_track_map(self, to_build: bool):
+        if to_build:
+            self.window_data.build_track_map(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_track_map()
+
 
 
 class FileWindow(QWidget):
@@ -260,7 +275,7 @@ class FileWindow(QWidget):
 
     def clear_file_2(self):
         self.label_pick_file_2.setText("Select Second Run")
-        self.run_1_updated.emit(None)
+        self.run_2_updated.emit(None)
 
     @staticmethod
     def button_add_file_on_click():
@@ -323,103 +338,298 @@ class FileWindow(QWidget):
 
 
 class OptionsWindow(QWidget):
+    show_track_map = pyqtSignal(bool)
+    show_run_1_speed_heatmap = pyqtSignal(bool)
+    show_run_2_speed_heatmap = pyqtSignal(bool)
+    show_radius = pyqtSignal(bool)
+    show_run_1_g = pyqtSignal(bool)
+    show_run_2_g = pyqtSignal(bool)
+    show_steering_angle = pyqtSignal(bool)
+    show_acceleration_prs = pyqtSignal(bool)
+    show_brake_prs = pyqtSignal(bool)
+    show_yaw_vel = pyqtSignal(bool)
+    show_yaw_acc = pyqtSignal(bool)
+    show_slip_angle = pyqtSignal(bool)
+    show_slip_ratio = pyqtSignal(bool)
+    show_tire_fy = pyqtSignal(bool)
+    show_roll_grad = pyqtSignal(bool)
+    show_pitch_grad = pyqtSignal(bool)
+    show_beta = pyqtSignal(bool)
+    show_battery_power = pyqtSignal(bool)
+    show_power_draw = pyqtSignal(bool)
+
+    checkbox_track_map: QCheckBox
+    checkbox_file_1_heatmap: QCheckBox
+    checkbox_file_2_heatmap: QCheckBox
+    checkbox_radius: QCheckBox
+    checkbox_file_1_g: QCheckBox
+    checkbox_file_2_g: QCheckBox
+    checkbox_steering_angle: QCheckBox
+    checkbox_acceleration_prs: QCheckBox
+    checkbox_brake_prs: QCheckBox
+    checkbox_yaw_vel: QCheckBox
+    checkbox_yaw_acc: QCheckBox
+    checkbox_slip_angle: QCheckBox
+    checkbox_slip_ratio: QCheckBox
+    checkbox_tire_fy: QCheckBox
+    checkbox_roll_grad: QCheckBox
+    checkbox_pitch_grad: QCheckBox
+    checkbox_beta: QCheckBox
+    checkbox_battery_power: QCheckBox
+    checkbox_power_draw: QCheckBox
+
+    layout_option_selection: QVBoxLayout
+
     def __init__(self):
         super().__init__()
         self.setMinimumSize(200, 300)
         self._build_ui()
 
     def _build_ui(self):
-        layout_option_selection = QVBoxLayout()
-        layout_option_selection.setContentsMargins(24, 24, 24, 24)
-        layout_option_selection.setSpacing(10)
+        self.layout_option_selection = QVBoxLayout()
+        self.layout_option_selection.setContentsMargins(24, 24, 24, 24)
+        self.layout_option_selection.setSpacing(10)
 
         label_select_options = QLabel("Select Visible Datapoints")
         checkbox_layout_1 = QHBoxLayout()
-        checkbox_track_map = QCheckBox("Track Map")
-        checkbox_file_1_heatmap = QCheckBox("Run 1 Speed Heatmap")
-        checkbox_layout_1.addWidget(checkbox_track_map)
-        checkbox_layout_1.addWidget(checkbox_file_1_heatmap)
+        self.checkbox_track_map = QCheckBox("Track Map")
+        self.checkbox_track_map.stateChanged.connect(self.signal_track_map)
+        self.checkbox_file_1_heatmap = QCheckBox("Run 1 Speed Heatmap")
+        self.checkbox_file_1_heatmap.stateChanged.connect(self.signal_run_1_speed_heatmap)
+        checkbox_layout_1.addWidget(self.checkbox_track_map)
+        checkbox_layout_1.addWidget(self.checkbox_file_1_heatmap)
         checkbox_layout_2 = QHBoxLayout()
-        checkbox_file_2_heatmap = QCheckBox("Run 2 Speed Heatmap")
-        checkbox_radius = QCheckBox("Radius")
-        checkbox_layout_2.addWidget(checkbox_file_2_heatmap)
-        checkbox_layout_2.addWidget(checkbox_radius)
+        self.checkbox_file_2_heatmap = QCheckBox("Run 2 Speed Heatmap")
+        self.checkbox_file_2_heatmap.stateChanged.connect(self.signal_run_2_speed_heatmap)
+        self.checkbox_radius = QCheckBox("Radius")
+        self.checkbox_radius.stateChanged.connect(self.signal_radius)
+        checkbox_layout_2.addWidget(self.checkbox_file_2_heatmap)
+        checkbox_layout_2.addWidget(self.checkbox_radius)
         checkbox_layout_3 = QHBoxLayout()
-        checkbox_file_1_g = QCheckBox("Run 1 G Forces")
-        checkbox_file_2_g = QCheckBox("Run 2 G Forces")
-        checkbox_layout_3.addWidget(checkbox_file_1_g)
-        checkbox_layout_3.addWidget(checkbox_file_2_g)
+        self.checkbox_file_1_g = QCheckBox("Run 1 G Forces")
+        self.checkbox_file_1_g.stateChanged.connect(self.signal_run_1_g)
+        self.checkbox_file_2_g = QCheckBox("Run 2 G Forces")
+        self.checkbox_file_2_g.stateChanged.connect(self.signal_run_2_g)
+        checkbox_layout_3.addWidget(self.checkbox_file_1_g)
+        checkbox_layout_3.addWidget(self.checkbox_file_2_g)
         checkbox_layout_4 = QHBoxLayout()
-        checkbox_steering_angle = QCheckBox("Steering Angle")
-        checkbox_acceleration_prs = QCheckBox("Acceleration Pressure")
-        checkbox_layout_4.addWidget(checkbox_steering_angle)
-        checkbox_layout_4.addWidget(checkbox_acceleration_prs)
+        self.checkbox_steering_angle = QCheckBox("Steering Angle")
+        self.checkbox_steering_angle.stateChanged.connect(self.signal_steering_angle)
+        self.checkbox_acceleration_prs = QCheckBox("Acceleration Pressure")
+        self.checkbox_acceleration_prs.stateChanged.connect(self.signal_acceleration_prs)
+        checkbox_layout_4.addWidget(self.checkbox_steering_angle)
+        checkbox_layout_4.addWidget(self.checkbox_acceleration_prs)
         checkbox_layout_5 = QHBoxLayout()
-        checkbox_brake_prs = QCheckBox("Brake Pressure")
-        checkbox_yaw_vel = QCheckBox("Yaw Velocity")
-        checkbox_layout_5.addWidget(checkbox_yaw_vel)
-        checkbox_layout_5.addWidget(checkbox_brake_prs)
+        self.checkbox_brake_prs = QCheckBox("Brake Pressure")
+        self.checkbox_brake_prs.stateChanged.connect(self.signal_brake_prs)
+        self.checkbox_yaw_vel = QCheckBox("Yaw Velocity")
+        self.checkbox_yaw_vel.stateChanged.connect(self.signal_yaw_vel)
+        checkbox_layout_5.addWidget(self.checkbox_yaw_vel)
+        checkbox_layout_5.addWidget(self.checkbox_brake_prs)
         checkbox_layout_6 = QHBoxLayout()
-        checkbox_yaw_acc = QCheckBox("Yaw Acceleration")
-        checkbox_slip_angle = QCheckBox("Slip Angle")
-        checkbox_layout_6.addWidget(checkbox_yaw_acc)
-        checkbox_layout_6.addWidget(checkbox_slip_angle)
+        self.checkbox_yaw_acc = QCheckBox("Yaw Acceleration")
+        self.checkbox_yaw_acc.stateChanged.connect(self.signal_yaw_acc)
+        self.checkbox_slip_angle = QCheckBox("Slip Angle")
+        self.checkbox_slip_angle.stateChanged.connect(self.signal_slip_angle)
+        checkbox_layout_6.addWidget(self.checkbox_yaw_acc)
+        checkbox_layout_6.addWidget(self.checkbox_slip_angle)
         checkbox_layout_7 = QHBoxLayout()
-        checkbox_slip_ratio = QCheckBox("Slip Ratio")
-        checkbox_tire_fy = QCheckBox("Tire Fy")
-        checkbox_layout_7.addWidget(checkbox_slip_ratio)
-        checkbox_layout_7.addWidget(checkbox_tire_fy)
+        self.checkbox_slip_ratio = QCheckBox("Slip Ratio")
+        self.checkbox_slip_ratio.stateChanged.connect(self.signal_slip_ratio)
+        self.checkbox_tire_fy = QCheckBox("Tire Fy")
+        self.checkbox_tire_fy.stateChanged.connect(self.signal_tire_fy)
+        checkbox_layout_7.addWidget(self.checkbox_slip_ratio)
+        checkbox_layout_7.addWidget(self.checkbox_tire_fy)
         checkbox_layout_8 = QHBoxLayout()
-        checkbox_roll_grad = QCheckBox("Roll Gradient")
-        checkbox_pitch_grad = QCheckBox("Pitch Gradient")
-        checkbox_layout_8.addWidget(checkbox_roll_grad)
-        checkbox_layout_8.addWidget(checkbox_pitch_grad)
+        self.checkbox_roll_grad = QCheckBox("Roll Gradient")
+        self.checkbox_roll_grad.stateChanged.connect(self.signal_roll_grad)
+        self.checkbox_pitch_grad = QCheckBox("Pitch Gradient")
+        self.checkbox_pitch_grad.stateChanged.connect(self.signal_pitch_grad)
+        checkbox_layout_8.addWidget(self.checkbox_roll_grad)
+        checkbox_layout_8.addWidget(self.checkbox_pitch_grad)
         checkbox_layout_9 = QHBoxLayout()
-        checkbox_beta = QCheckBox("Beta")
-        checkbox_battery_power = QCheckBox("Battery Power")
-        checkbox_layout_9.addWidget(checkbox_beta)
-        checkbox_layout_9.addWidget(checkbox_battery_power)
+        self.checkbox_beta = QCheckBox("Beta")
+        self.checkbox_beta.stateChanged.connect(self.signal_beta)
+        self.checkbox_battery_power = QCheckBox("Battery Power")
+        self.checkbox_battery_power.stateChanged.connect(self.signal_battery_power)
+        checkbox_layout_9.addWidget(self.checkbox_beta)
+        checkbox_layout_9.addWidget(self.checkbox_battery_power)
         checkbox_layout_10 = QHBoxLayout()
-        checkbox_power_draw = QCheckBox("Power Draw")
-        checkbox_layout_10.addWidget(checkbox_power_draw)
+        self.checkbox_power_draw = QCheckBox("Power Draw")
+        self.checkbox_power_draw.stateChanged.connect(self.signal_power_draw)
+        checkbox_layout_10.addWidget(self.checkbox_power_draw)
 
-        layout_option_selection.addWidget(label_select_options)
-        layout_option_selection.addLayout(checkbox_layout_1)
-        layout_option_selection.addLayout(checkbox_layout_2)
-        layout_option_selection.addLayout(checkbox_layout_3)
-        layout_option_selection.addLayout(checkbox_layout_4)
-        layout_option_selection.addLayout(checkbox_layout_5)
-        layout_option_selection.addLayout(checkbox_layout_6)
-        layout_option_selection.addLayout(checkbox_layout_7)
-        layout_option_selection.addLayout(checkbox_layout_8)
-        layout_option_selection.addLayout(checkbox_layout_9)
-        layout_option_selection.addLayout(checkbox_layout_10)
-        layout_option_selection.addStretch()
+        self.layout_option_selection.addWidget(label_select_options)
+        self.layout_option_selection.addLayout(checkbox_layout_1)
+        self.layout_option_selection.addLayout(checkbox_layout_2)
+        self.layout_option_selection.addLayout(checkbox_layout_3)
+        self.layout_option_selection.addLayout(checkbox_layout_4)
+        self.layout_option_selection.addLayout(checkbox_layout_5)
+        self.layout_option_selection.addLayout(checkbox_layout_6)
+        self.layout_option_selection.addLayout(checkbox_layout_7)
+        self.layout_option_selection.addLayout(checkbox_layout_8)
+        self.layout_option_selection.addLayout(checkbox_layout_9)
+        self.layout_option_selection.addLayout(checkbox_layout_10)
+        self.layout_option_selection.addStretch()
 
-        self.setLayout(layout_option_selection)
+        self.setLayout(self.layout_option_selection)
+
+    def signal_track_map(self):
+        if self.checkbox_track_map.isChecked():
+            self.show_track_map.emit(True)
+        else:
+            self.show_track_map.emit(False)
+
+    def signal_run_1_speed_heatmap(self):
+        if self.checkbox_file_1_heatmap.isChecked():
+            self.show_run_1_speed_heatmap.emit(True)
+        else:
+            self.show_run_1_speed_heatmap.emit(False)
+
+    def signal_run_2_speed_heatmap(self):
+        if self.checkbox_file_2_heatmap.isChecked():
+            self.show_run_2_speed_heatmap.emit(True)
+        else:
+            self.show_run_2_speed_heatmap.emit(False)
+
+    def signal_radius(self):
+        if self.checkbox_radius.isChecked():
+            self.show_radius.emit(True)
+        else:
+            self.show_radius.emit(False)
+
+    def signal_run_1_g(self):
+        if self.checkbox_file_1_g.isChecked():
+            self.show_run_1_g.emit(True)
+        else:
+            self.show_run_1_g.emit(False)
+
+    def signal_run_2_g(self):
+        if self.checkbox_file_2_g.isChecked():
+            self.show_run_2_g.emit(True)
+        else:
+            self.show_run_2_g.emit(False)
+
+    def signal_steering_angle(self):
+        if self.checkbox_steering_angle.isChecked():
+            self.show_steering_angle.emit(True)
+        else:
+            self.show_steering_angle.emit(False)
+
+    def signal_acceleration_prs(self):
+        if self.checkbox_acceleration_prs.isChecked():
+            self.show_acceleration_prs.emit(True)
+        else:
+            self.show_acceleration_prs.emit(False)
+
+    def signal_brake_prs(self):
+        if self.checkbox_brake_prs.isChecked():
+            self.show_brake_prs.emit(True)
+        else:
+            self.show_brake_prs.emit(False)
+
+    def signal_yaw_vel(self):
+        if self.checkbox_yaw_vel.isChecked():
+            self.show_yaw_vel.emit(True)
+        else:
+            self.show_yaw_vel.emit(False)
+
+    def signal_yaw_acc(self):
+        if self.checkbox_yaw_acc.isChecked():
+            self.show_yaw_acc.emit(True)
+        else:
+            self.show_yaw_acc.emit(False)
+
+    def signal_slip_angle(self):
+        if self.checkbox_slip_angle.isChecked():
+            self.show_slip_angle.emit(True)
+        else:
+            self.show_slip_angle.emit(False)
+
+    def signal_slip_ratio(self):
+        if self.checkbox_slip_ratio.isChecked():
+            self.show_slip_ratio.emit(True)
+        else:
+            self.show_slip_ratio.emit(False)
+
+    def signal_tire_fy(self):
+        if self.checkbox_tire_fy.isChecked():
+            self.show_tire_fy.emit(True)
+        else:
+            self.show_tire_fy.emit(False)
+
+    def signal_roll_grad(self):
+        if self.checkbox_roll_grad.isChecked():
+            self.show_roll_grad.emit(True)
+        else:
+            self.show_roll_grad.emit(False)
+
+    def signal_pitch_grad(self):
+        if self.checkbox_pitch_grad.isChecked():
+            self.show_pitch_grad.emit(True)
+        else:
+            self.show_pitch_grad.emit(False)
+
+    def signal_beta(self):
+        if self.checkbox_beta.isChecked():
+            self.show_beta.emit(True)
+        else:
+            self.show_beta.emit(False)
+
+    def signal_battery_power(self):
+        if self.checkbox_battery_power.isChecked():
+            self.show_battery_power.emit(True)
+        else:
+            self.show_battery_power.emit(False)
+
+    def signal_power_draw(self):
+        if self.checkbox_power_draw.isChecked():
+            self.show_power_draw.emit(True)
+        else:
+            self.show_power_draw.emit(False)
+
+    def reemit_signals(self):
+        self.signal_track_map()
+        self.signal_run_1_speed_heatmap()
+        self.signal_run_2_speed_heatmap()
+        self.signal_radius()
+        self.signal_run_1_g()
+        self.signal_run_2_g()
+        self.signal_steering_angle()
+        self.signal_acceleration_prs()
+        self.signal_brake_prs()
+        self.signal_yaw_vel()
+        self.signal_yaw_acc()
+        self.signal_slip_angle()
+        self.signal_slip_ratio()
+        self.signal_tire_fy()
+        self.signal_roll_grad()
+        self.signal_pitch_grad()
+        self.signal_beta()
+        self.signal_battery_power()
+        self.signal_power_draw()
+
+    def reset_checkboxes(self):
+        for i in range(self.layout_option_selection.count()):
+            item = self.layout_option_selection.itemAt(i)
+            widget = item.widget()      # type: ignore
+            if isinstance(widget, QCheckBox):
+                widget.setChecked(False)
+
+
+
+class MplCanvas(FigureCanvas):
+    def __init__(self, parent=None, width=5, height=4, dpi=100):
+        fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = fig.add_subplot(111)
+        super().__init__(fig)
 
 
 
 class DataWindow(QWidget):
-    show_track_map = False
-    show_run_1_speed_heatmap = False
-    show_run_2_speed_heatmap = False
-    show_radius = False
-    show_run_1_g = False
-    show_run_2_g = False
-    show_steering_angle = False
-    show_acceleration_prs = False
-    show_brake_prs = False
-    show_yaw_vel = False
-    show_yaw_acc = False
-    show_slip_angle = False
-    show_slip_ratio = False
-    show_tire_fy = False
-    show_roll_grad = False
-    show_pitch_grad = False
-    show_beta = False
-    show_battery_power = False
-    show_power_draw = False
+    widget_track_map: QWidget | None = None
+    layout_widgets: QVBoxLayout | None = None
+    layout: QVBoxLayout
 
     slider: QSlider
     label_slider: QLabel
@@ -434,7 +644,7 @@ class DataWindow(QWidget):
         self._build_ui()
 
     def _build_ui(self):
-        layout = QVBoxLayout()
+        self.layout = QVBoxLayout()
         layout_slider = QHBoxLayout()
         self.button_slider = QPushButton("Play")
         self.button_slider.clicked.connect(self._on_slider_play)
@@ -447,7 +657,13 @@ class DataWindow(QWidget):
         layout_slider.addWidget(self.button_slider)
         layout_slider.addWidget(self.slider)
         layout_slider.addWidget(self.label_slider)
-        layout.addLayout(layout_slider)
+        self.layout.addLayout(layout_slider)
+        self.layout_widgets = QVBoxLayout()
+        scroll_area_data = QScrollArea()
+        scroll_area_data.setWidgetResizable(True)
+        scroll_area_data.setLayout(self.layout_widgets)
+        scroll_area_data.setMinimumSize(750, 425)
+        self.layout.addWidget(scroll_area_data)
 
         self.playback_timer = QTimer(self)
         self.playback_timer.setInterval(16)
@@ -458,8 +674,8 @@ class DataWindow(QWidget):
         self.playback_speed: float = 1.0
         self.ticks_per_second: float = 100.0
 
-        layout.addStretch()
-        self.setLayout(layout)
+        self.layout.addStretch()
+        self.setLayout(self.layout)
 
     def update_slider_max(self, max_value: int):
         if self.slider is not None:
@@ -510,6 +726,28 @@ class DataWindow(QWidget):
             self.slider.setValue(self.slider.maximum())
             self.playback_timer.stop()
 
+    def build_track_map(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_track_map()
+
+        if isinstance(df1, pd.DataFrame) or isinstance(df2, pd.DataFrame):
+            target_df = df1 if isinstance(df1, pd.DataFrame) else df2
+            self.widget_track_map = QWidget()
+            layout = QVBoxLayout()
+            canvas = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            canvas.axes.scatter(target_df.iloc[:, 0], target_df.iloc[:, 1], color="#FFFFFF", s=20)
+            canvas.axes.axis('off')
+            canvas.draw()
+            layout.addWidget(canvas)  # type: ignore
+            self.widget_track_map.setLayout(layout) # type: ignore
+            self.layout_widgets.addWidget(self.widget_track_map) # type: ignore
+
+    def destroy_track_map(self):
+        if self.widget_track_map is not None:
+            self.layout_widgets.removeWidget(self.widget_track_map) # type: ignore
+            self.widget_track_map.hide() # type: ignore
+            self.widget_track_map.deleteLater() # type: ignore
+            self.widget_track_map = None
+
 
 
 
@@ -554,7 +792,7 @@ class FileAdditionWindow(QWidget):
             self.label_current_selected.setText("Current File Selected: ")
 
     def button_confirm_on_click(self):
-        run_file = self.file_to_add[0] if self.file_to_add else None
+        run_file = self.file_to_add[0] if (self.file_to_add and self.file_to_add[0]) else None
         run_name = self.textbox_name.text().strip()
 
         if not run_file and not run_name:
