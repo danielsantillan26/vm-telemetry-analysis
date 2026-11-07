@@ -138,6 +138,9 @@ class MainWindow(QMainWindow):
         self.window_options.show_run_2_speed_heatmap.connect(
             lambda state: self.handle_file_2_heatmap(state)
         )
+        self.window_options.show_speed.connect(
+            lambda state: self.handle_speed(state)
+        )
 
     def _build_stats_ui(self):
         self.splitter_data.addWidget(QWidget())
@@ -186,6 +189,12 @@ class MainWindow(QMainWindow):
             self.window_data.build_file_2_heatmap(self.active_run_2)
         else:
             self.window_data.destroy_file_2_heatmap()
+
+    def handle_speed(self, to_build: bool):
+        if to_build:
+            self.window_data.build_speed(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_speed()
 
 
 
@@ -358,6 +367,7 @@ class OptionsWindow(QWidget):
     show_track_map = pyqtSignal(bool)
     show_run_1_speed_heatmap = pyqtSignal(bool)
     show_run_2_speed_heatmap = pyqtSignal(bool)
+    show_speed = pyqtSignal(bool)
     show_radius = pyqtSignal(bool)
     show_run_1_g = pyqtSignal(bool)
     show_run_2_g = pyqtSignal(bool)
@@ -378,6 +388,7 @@ class OptionsWindow(QWidget):
     checkbox_track_map: QCheckBox
     checkbox_file_1_heatmap: QCheckBox
     checkbox_file_2_heatmap: QCheckBox
+    checkbox_speed: QCheckBox
     checkbox_radius: QCheckBox
     checkbox_file_1_g: QCheckBox
     checkbox_file_2_g: QCheckBox
@@ -418,62 +429,65 @@ class OptionsWindow(QWidget):
         checkbox_layout_2 = QHBoxLayout()
         self.checkbox_file_2_heatmap = QCheckBox("Run 2 Speed Heatmap")
         self.checkbox_file_2_heatmap.stateChanged.connect(self.signal_run_2_speed_heatmap)
+        self.checkbox_speed = QCheckBox("Speed")
+        self.checkbox_speed.stateChanged.connect(self.signal_speed)
+        checkbox_layout_2.addWidget(self.checkbox_file_2_heatmap)
+        checkbox_layout_2.addWidget(self.checkbox_speed)
+        checkbox_layout_3 = QHBoxLayout()
         self.checkbox_radius = QCheckBox("Radius")
         self.checkbox_radius.stateChanged.connect(self.signal_radius)
-        checkbox_layout_2.addWidget(self.checkbox_file_2_heatmap)
-        checkbox_layout_2.addWidget(self.checkbox_radius)
-        checkbox_layout_3 = QHBoxLayout()
         self.checkbox_file_1_g = QCheckBox("Run 1 G Forces")
         self.checkbox_file_1_g.stateChanged.connect(self.signal_run_1_g)
+        checkbox_layout_3.addWidget(self.checkbox_radius)
+        checkbox_layout_3.addWidget(self.checkbox_file_1_g)
+        checkbox_layout_4 = QHBoxLayout()
         self.checkbox_file_2_g = QCheckBox("Run 2 G Forces")
         self.checkbox_file_2_g.stateChanged.connect(self.signal_run_2_g)
-        checkbox_layout_3.addWidget(self.checkbox_file_1_g)
-        checkbox_layout_3.addWidget(self.checkbox_file_2_g)
-        checkbox_layout_4 = QHBoxLayout()
         self.checkbox_steering_angle = QCheckBox("Steering Angle")
         self.checkbox_steering_angle.stateChanged.connect(self.signal_steering_angle)
+        checkbox_layout_4.addWidget(self.checkbox_file_2_g)
+        checkbox_layout_4.addWidget(self.checkbox_steering_angle)
+        checkbox_layout_5 = QHBoxLayout()
         self.checkbox_acceleration_prs = QCheckBox("Acceleration Pressure")
         self.checkbox_acceleration_prs.stateChanged.connect(self.signal_acceleration_prs)
-        checkbox_layout_4.addWidget(self.checkbox_steering_angle)
-        checkbox_layout_4.addWidget(self.checkbox_acceleration_prs)
-        checkbox_layout_5 = QHBoxLayout()
-        self.checkbox_brake_prs = QCheckBox("Brake Pressure")
-        self.checkbox_brake_prs.stateChanged.connect(self.signal_brake_prs)
         self.checkbox_yaw_vel = QCheckBox("Yaw Velocity")
         self.checkbox_yaw_vel.stateChanged.connect(self.signal_yaw_vel)
+        checkbox_layout_5.addWidget(self.checkbox_acceleration_prs)
         checkbox_layout_5.addWidget(self.checkbox_yaw_vel)
-        checkbox_layout_5.addWidget(self.checkbox_brake_prs)
         checkbox_layout_6 = QHBoxLayout()
+        self.checkbox_brake_prs = QCheckBox("Brake Pressure")
+        self.checkbox_brake_prs.stateChanged.connect(self.signal_brake_prs)
         self.checkbox_yaw_acc = QCheckBox("Yaw Acceleration")
         self.checkbox_yaw_acc.stateChanged.connect(self.signal_yaw_acc)
+        checkbox_layout_6.addWidget(self.checkbox_brake_prs)
+        checkbox_layout_6.addWidget(self.checkbox_yaw_acc)
+        checkbox_layout_7 = QHBoxLayout()
         self.checkbox_slip_angle = QCheckBox("Slip Angle")
         self.checkbox_slip_angle.stateChanged.connect(self.signal_slip_angle)
-        checkbox_layout_6.addWidget(self.checkbox_yaw_acc)
-        checkbox_layout_6.addWidget(self.checkbox_slip_angle)
-        checkbox_layout_7 = QHBoxLayout()
         self.checkbox_slip_ratio = QCheckBox("Slip Ratio")
         self.checkbox_slip_ratio.stateChanged.connect(self.signal_slip_ratio)
+        checkbox_layout_7.addWidget(self.checkbox_slip_angle)
+        checkbox_layout_7.addWidget(self.checkbox_slip_ratio)
+        checkbox_layout_8 = QHBoxLayout()
         self.checkbox_tire_fy = QCheckBox("Tire Fy")
         self.checkbox_tire_fy.stateChanged.connect(self.signal_tire_fy)
-        checkbox_layout_7.addWidget(self.checkbox_slip_ratio)
-        checkbox_layout_7.addWidget(self.checkbox_tire_fy)
-        checkbox_layout_8 = QHBoxLayout()
         self.checkbox_roll_grad = QCheckBox("Roll Gradient")
         self.checkbox_roll_grad.stateChanged.connect(self.signal_roll_grad)
+        checkbox_layout_8.addWidget(self.checkbox_tire_fy)
+        checkbox_layout_8.addWidget(self.checkbox_roll_grad)
+        checkbox_layout_9 = QHBoxLayout()
         self.checkbox_pitch_grad = QCheckBox("Pitch Gradient")
         self.checkbox_pitch_grad.stateChanged.connect(self.signal_pitch_grad)
-        checkbox_layout_8.addWidget(self.checkbox_roll_grad)
-        checkbox_layout_8.addWidget(self.checkbox_pitch_grad)
-        checkbox_layout_9 = QHBoxLayout()
         self.checkbox_beta = QCheckBox("Beta")
         self.checkbox_beta.stateChanged.connect(self.signal_beta)
+        checkbox_layout_9.addWidget(self.checkbox_pitch_grad)
+        checkbox_layout_9.addWidget(self.checkbox_beta)
+        checkbox_layout_10 = QHBoxLayout()
         self.checkbox_battery_power = QCheckBox("Battery Power")
         self.checkbox_battery_power.stateChanged.connect(self.signal_battery_power)
-        checkbox_layout_9.addWidget(self.checkbox_beta)
-        checkbox_layout_9.addWidget(self.checkbox_battery_power)
-        checkbox_layout_10 = QHBoxLayout()
         self.checkbox_power_draw = QCheckBox("Power Draw")
         self.checkbox_power_draw.stateChanged.connect(self.signal_power_draw)
+        checkbox_layout_10.addWidget(self.checkbox_battery_power)
         checkbox_layout_10.addWidget(self.checkbox_power_draw)
 
         self.layout_option_selection.addWidget(label_select_options)
@@ -508,6 +522,12 @@ class OptionsWindow(QWidget):
             self.show_run_2_speed_heatmap.emit(True)
         else:
             self.show_run_2_speed_heatmap.emit(False)
+
+    def signal_speed(self):
+        if self.checkbox_speed.isChecked():
+            self.show_speed.emit(True)
+        else:
+            self.show_speed.emit(False)
 
     def signal_radius(self):
         if self.checkbox_radius.isChecked():
@@ -609,6 +629,7 @@ class OptionsWindow(QWidget):
         self.signal_track_map()
         self.signal_run_1_speed_heatmap()
         self.signal_run_2_speed_heatmap()
+        self.signal_speed()
         self.signal_radius()
         self.signal_run_1_g()
         self.signal_run_2_g()
@@ -664,6 +685,12 @@ class DataWindow(QWidget):
     heat_track_dot_2 = None
     layout_file_2_heatmap: QVBoxLayout | None = None
     canvas_file_2_heatmap: MplCanvas | None = None
+
+    active_plots = {}
+
+    widget_speed: QWidget | None = None
+    layout_speed: QVBoxLayout | None = None
+    canvas_speed: MplCanvas | None = None
 
     slider: QSlider
     label_slider: QLabel
@@ -730,6 +757,7 @@ class DataWindow(QWidget):
             self.update_dots(seconds)
             self.update_file_1_dot(seconds)
             self.update_file_2_dot(seconds)
+            self.update_plots(seconds)
 
     def _on_slider_play(self):
         if self.slider.maximum() == 0:
@@ -783,7 +811,7 @@ class DataWindow(QWidget):
             self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
 
             self.widget_track_map = QWidget()
-            self.widget_track_map.setMinimumHeight(200)
+            self.widget_track_map.setMinimumHeight(300)
             self.layout_track_map = QVBoxLayout()
             self.canvas_track_map = MplCanvas(parent=None, width=5, height=4, dpi=100)
             self.canvas_track_map.axes.scatter(target_df.iloc[:, 0], target_df.iloc[:, 1], color="#FFFFFF", s=20)
@@ -831,7 +859,7 @@ class DataWindow(QWidget):
             self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
 
             self.widget_file_1_heatmap = QWidget()
-            self.widget_file_1_heatmap.setMinimumHeight(200)
+            self.widget_file_1_heatmap.setMinimumHeight(300)
             self.layout_file_1_heatmap = QVBoxLayout()
             self.canvas_file_1_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
             speed_values = pd.to_numeric(self.df1.iloc[:, 5], errors="coerce")
@@ -872,7 +900,7 @@ class DataWindow(QWidget):
             self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
 
             self.widget_file_2_heatmap = QWidget()
-            self.widget_file_2_heatmap.setMinimumHeight(200)
+            self.widget_file_2_heatmap.setMinimumHeight(300)
             self.layout_file_2_heatmap = QVBoxLayout()
             self.canvas_file_2_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
             speed_values = pd.to_numeric(self.df2.iloc[:, 5], errors="coerce")
@@ -967,6 +995,96 @@ class DataWindow(QWidget):
             self.canvas_file_2_heatmap.axes.draw_artist(self.heat_track_dot_2)
 
         self.canvas_file_2_heatmap.blit(self.canvas_file_2_heatmap.axes.bbox)
+
+    def build_speed(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_speed()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_speed = QWidget()
+            self.widget_speed.setMinimumHeight(400)
+            self.layout_speed = QVBoxLayout()
+            self.canvas_speed = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_speed.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 5], color="#0075ff", linewidth=0.5)
+            self.canvas_speed.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 5], color="#00afff", linewidth=0.5)
+            self.canvas_speed.axes.set_title("Speed")
+            self.canvas_speed.axes.set_xlabel("Time (s)")
+            self.canvas_speed.axes.set_ylabel("Speed (mph)")
+            self.canvas_speed.draw()
+            self.layout_speed.addWidget(self.canvas_speed)
+            self.widget_speed.setLayout(self.layout_speed)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_speed)
+
+            self.active_plots["speed"] = {"canvas": self.canvas_speed, "axis": self.canvas_speed.axes,
+                                          "line": self.canvas_speed.axes.axvline(x=0, color="red", linestyle="-",
+                                                                                 linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_speed = QWidget()
+            self.widget_speed.setMinimumHeight(400)
+            self.layout_speed = QVBoxLayout()
+            self.canvas_speed = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_speed.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 5], color="#00afff", linewidth=0.5)
+            self.canvas_speed.axes.set_title("Speed")
+            self.canvas_speed.axes.set_xlabel("Time (s)")
+            self.canvas_speed.axes.set_ylabel("Speed (mph)")
+            self.canvas_speed.draw()
+            self.layout_speed.addWidget(self.canvas_speed)
+            self.widget_speed.setLayout(self.layout_speed)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_speed)
+
+            self.active_plots["speed"] = {"canvas": self.canvas_speed, "line": self.canvas_speed.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_speed = QWidget()
+            self.widget_speed.setMinimumHeight(400)
+            self.layout_speed = QVBoxLayout()
+            self.canvas_speed = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_speed.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 5], color="#00afff", linewidth=0.5)
+            self.canvas_speed.axes.set_title("Speed")
+            self.canvas_speed.axes.set_xlabel("Time (s)")
+            self.canvas_speed.axes.set_ylabel("Speed (mph)")
+            self.canvas_speed.draw()
+            self.layout_speed.addWidget(self.canvas_speed)
+            self.widget_speed.setLayout(self.layout_speed)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_speed)
+
+            self.active_plots["speed"] = {"canvas": self.canvas_speed, "axis": self.canvas_speed.axes, "line": self.canvas_speed.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        else:
+            return
+
+    def destroy_speed(self):
+        if self.widget_speed is not None:
+            self.canvas_speed = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_speed)
+            self.widget_speed.hide()
+            self.widget_speed.deleteLater()
+            self.widget_speed = None
+            self.active_plots.pop("speed", None)
+
+    def update_plots(self, val: float):
+        val = float(val)
+        x_min = max(0.0, val-4.0)
+        window_size = 8.0
+        x_max = x_min + window_size
+
+        for plot in self.active_plots.values():
+            canvas = plot["canvas"]
+            line = plot.get("line")
+
+            if line is not None:
+                line.set_xdata([val, val])
+            canvas.axes.set_xlim(x_min, x_max)
+            canvas.draw_idle()
 
 
 
