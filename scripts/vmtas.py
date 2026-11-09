@@ -141,6 +141,54 @@ class MainWindow(QMainWindow):
         self.window_options.show_speed.connect(
             lambda state: self.handle_speed(state)
         )
+        self.window_options.show_radius.connect(
+            lambda state: self.handle_radius(state)
+        )
+        self.window_options.show_run_1_g.connect(
+            lambda state: self.handle_file_1_g(state)
+        )
+        self.window_options.show_run_2_g.connect(
+            lambda state: self.handle_file_2_g(state)
+        )
+        self.window_options.show_steering_angle.connect(
+            lambda state: self.handle_steering_angle(state)
+        )
+        self.window_options.show_acceleration_prs.connect(
+            lambda state: self.handle_acceleration_prs(state)
+        )
+        self.window_options.show_brake_prs.connect(
+            lambda state: self.handle_brake_prs(state)
+        )
+        self.window_options.show_yaw_vel.connect(
+            lambda state: self.handle_yaw_vel(state)
+        )
+        self.window_options.show_yaw_acc.connect(
+            lambda state: self.handle_yaw_acc(state)
+        )
+        self.window_options.show_slip_angle.connect(
+            lambda state: self.handle_slip_angle(state)
+        )
+        self.window_options.show_slip_ratio.connect(
+            lambda state: self.handle_slip_ratio(state)
+        )
+        self.window_options.show_tire_fy.connect(
+            lambda state: self.handle_tire_fy(state)
+        )
+        self.window_options.show_roll_grad.connect(
+            lambda state: self.handle_roll_grad(state)
+        )
+        self.window_options.show_pitch_grad.connect(
+            lambda state: self.handle_pitch_grad(state)
+        )
+        self.window_options.show_beta.connect(
+            lambda state: self.handle_beta(state)
+        )
+        self.window_options.show_battery_power.connect(
+            lambda state: self.handle_battery_power(state)
+        )
+        self.window_options.show_power_draw.connect(
+            lambda state: self.handle_power_draw(state)
+        )
 
     def _build_stats_ui(self):
         self.splitter_data.addWidget(QWidget())
@@ -195,6 +243,103 @@ class MainWindow(QMainWindow):
             self.window_data.build_speed(self.active_run_1, self.active_run_2)
         else:
             self.window_data.destroy_speed()
+
+    def handle_radius(self, to_build: bool):
+        if to_build:
+            self.window_data.build_radius(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_radius()
+
+    def handle_file_1_g(self, to_build: bool):
+        if to_build:
+            self.window_data.build_file_1_g(self.active_run_1)
+        else:
+            self.window_data.destroy_file_1_g()
+
+    def handle_file_2_g(self, to_build: bool):
+        if to_build:
+            self.window_data.build_file_2_g(self.active_run_2)
+        else:
+            self.window_data.destroy_file_2_g()
+
+    def handle_steering_angle(self, to_build: bool):
+        if to_build:
+            self.window_data.build_steering_angle(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_steering_angle()
+
+    def handle_acceleration_prs(self, to_build: bool):
+        if to_build:
+            self.window_data.build_acceleration_prs(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_acceleration_prs()
+
+    def handle_brake_prs(self, to_build: bool):
+        if to_build:
+            self.window_data.build_brake_prs(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_brake_prs()
+
+    def handle_yaw_vel(self, to_build: bool):
+        if to_build:
+            self.window_data.build_yaw_vel(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_yaw_vel()
+
+    def handle_yaw_acc(self, to_build: bool):
+        if to_build:
+            self.window_data.build_yaw_acc(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_yaw_acc()
+
+    def handle_slip_angle(self, to_build: bool):
+        if to_build:
+            self.window_data.build_slip_angle(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_slip_angle()
+
+    def handle_slip_ratio(self, to_build: bool):
+        if to_build:
+            self.window_data.build_slip_ratio(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_slip_ratio()
+
+    def handle_tire_fy(self, to_build: bool):
+        if to_build:
+            self.window_data.build_tire_fy(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_tire_fy()
+
+    def handle_roll_grad(self, to_build: bool):
+        if to_build:
+            self.window_data.build_roll_grad(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_roll_grad()
+
+    def handle_pitch_grad(self, to_build: bool):
+        if to_build:
+            self.window_data.build_pitch_grad(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_pitch_grad()
+
+    def handle_beta(self, to_build: bool):
+        if to_build:
+            self.window_data.build_beta(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_beta()
+
+    def handle_battery_power(self, to_build: bool):
+        if to_build:
+            self.window_data.build_battery_power(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_battery_power()
+
+    def handle_power_draw(self, to_build: bool):
+        if to_build:
+            self.window_data.build_power_draw(self.active_run_1, self.active_run_2)
+        else:
+            self.window_data.destroy_power_draw()
+
 
 
 
@@ -686,11 +831,79 @@ class DataWindow(QWidget):
     layout_file_2_heatmap: QVBoxLayout | None = None
     canvas_file_2_heatmap: MplCanvas | None = None
 
+    widget_file_1_g: QWidget | None = None
+    g_dot_1 = None
+    layout_file_1_g: QVBoxLayout | None = None
+    canvas_file_1_g: MplCanvas | None = None
+
+    widget_file_2_g: QWidget | None = None
+    g_dot_2 = None
+    layout_file_2_g: QVBoxLayout | None = None
+    canvas_file_2_g: MplCanvas | None = None
+
     active_plots = {}
 
     widget_speed: QWidget | None = None
     layout_speed: QVBoxLayout | None = None
     canvas_speed: MplCanvas | None = None
+
+    widget_radius: QWidget | None = None
+    layout_radius: QVBoxLayout | None = None
+    canvas_radius: MplCanvas | None = None
+
+    widget_steering_angle: QWidget | None = None
+    layout_steering_angle: QVBoxLayout | None = None
+    canvas_steering_angle: MplCanvas | None = None
+
+    widget_acceleration_prs: QWidget | None = None
+    layout_acceleration_prs: QVBoxLayout | None = None
+    canvas_acceleration_prs: MplCanvas | None = None
+
+    widget_brake_prs: QWidget | None = None
+    layout_brake_prs: QVBoxLayout | None = None
+    canvas_brake_prs: MplCanvas | None = None
+
+    widget_yaw_vel: QWidget | None = None
+    layout_yaw_vel: QVBoxLayout | None = None
+    canvas_yaw_vel: MplCanvas | None = None
+
+    widget_yaw_acc: QWidget | None = None
+    layout_yaw_acc: QVBoxLayout | None = None
+    canvas_yaw_acc: MplCanvas | None = None
+
+    widget_slip_angle: QWidget | None = None
+    layout_slip_angle: QVBoxLayout | None = None
+    canvas_slip_angle: MplCanvas | None = None
+
+    widget_slip_ratio: QWidget | None = None
+    layout_slip_ratio: QVBoxLayout | None = None
+    canvas_slip_ratio: MplCanvas | None = None
+
+    widget_tire_fy: QWidget | None = None
+    layout_tire_fy: QVBoxLayout | None = None
+    canvas_tire_fy: MplCanvas | None = None
+
+    widget_roll_grad: QWidget | None = None
+    layout_roll_grad: QVBoxLayout | None = None
+    canvas_roll_grad: MplCanvas | None = None
+
+    widget_pitch_grad: QWidget | None = None
+    layout_pitch_grad: QVBoxLayout | None = None
+    canvas_pitch_grad: MplCanvas | None = None
+
+    widget_beta: QWidget | None = None
+    layout_beta: QVBoxLayout | None = None
+    canvas_beta: MplCanvas | None = None
+
+    widget_battery_power: QWidget | None = None
+    layout_battery_power: QVBoxLayout | None = None
+    canvas_battery_power: MplCanvas | None = None
+
+    widget_power_draw: QWidget | None = None
+    layout_power_draw: QVBoxLayout | None = None
+    canvas_power_draw: MplCanvas | None = None
+
+
 
     slider: QSlider
     label_slider: QLabel
@@ -757,6 +970,8 @@ class DataWindow(QWidget):
             self.update_dots(seconds)
             self.update_file_1_dot(seconds)
             self.update_file_2_dot(seconds)
+            self.update_file_1_g_dot(seconds)
+            self.update_file_2_g_dot(seconds)
             self.update_plots(seconds)
 
     def _on_slider_play(self):
@@ -811,7 +1026,7 @@ class DataWindow(QWidget):
             self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
 
             self.widget_track_map = QWidget()
-            self.widget_track_map.setMinimumHeight(300)
+            self.widget_track_map.setMinimumHeight(400)
             self.layout_track_map = QVBoxLayout()
             self.canvas_track_map = MplCanvas(parent=None, width=5, height=4, dpi=100)
             self.canvas_track_map.axes.scatter(target_df.iloc[:, 0], target_df.iloc[:, 1], color="#FFFFFF", s=20)
@@ -859,7 +1074,7 @@ class DataWindow(QWidget):
             self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
 
             self.widget_file_1_heatmap = QWidget()
-            self.widget_file_1_heatmap.setMinimumHeight(300)
+            self.widget_file_1_heatmap.setMinimumHeight(400)
             self.layout_file_1_heatmap = QVBoxLayout()
             self.canvas_file_1_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
             speed_values = pd.to_numeric(self.df1.iloc[:, 5], errors="coerce")
@@ -900,7 +1115,7 @@ class DataWindow(QWidget):
             self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
 
             self.widget_file_2_heatmap = QWidget()
-            self.widget_file_2_heatmap.setMinimumHeight(300)
+            self.widget_file_2_heatmap.setMinimumHeight(400)
             self.layout_file_2_heatmap = QVBoxLayout()
             self.canvas_file_2_heatmap = MplCanvas(parent=None, width=5, height=4, dpi=100)
             speed_values = pd.to_numeric(self.df2.iloc[:, 5], errors="coerce")
@@ -996,6 +1211,126 @@ class DataWindow(QWidget):
 
         self.canvas_file_2_heatmap.blit(self.canvas_file_2_heatmap.axes.bbox)
 
+    def build_file_1_g(self, df1: pd.DataFrame | None):
+        self.destroy_file_1_g()
+
+        if isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_file_1_g = QWidget()
+            self.widget_file_1_g.setMinimumHeight(400)
+            self.layout_file_1_g = QVBoxLayout()
+            self.canvas_file_1_g = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_file_1_g.axes.scatter(self.df1.iloc[:,7], self.df1.iloc[:, 8], color="#180cb9", marker="o", s=10, zorder=0)
+            self.canvas_file_1_g.axes.set_title("G-G Plot (File 1)")
+            self.canvas_file_1_g.axes.set_xlabel("Lateral Acceleration (g)")
+            self.canvas_file_1_g.axes.set_ylabel("Longitudinal Acceleration (g)")
+            self.g_dot_1 = self.canvas_file_1_g.axes.plot([], [], color="yellow", marker="o", markersize=12, zorder=4, animated=True)[0]
+
+            self.bg_file_1_g = None
+
+            def on_draw(event):
+                self.bg_file_1_g = self.canvas_file_1_g.copy_from_bbox(
+                    self.canvas_file_1_g.axes.bbox
+                )
+                if self.g_dot_1:
+                    self.canvas_file_1_g.axes.draw_artist(self.g_dot_1)
+
+            self.canvas_file_1_g.mpl_connect("draw_event", on_draw)
+            self.canvas_file_1_g.draw()
+            self.layout_file_1_g.addWidget(self.canvas_file_1_g) # type: ignore
+            self.widget_file_1_g.setLayout(self.layout_file_1_g) # type: ignore
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_file_1_g)
+
+    def destroy_file_1_g(self):
+        if self.widget_file_1_g is not None:
+            self.g_dot_1 = None
+            self.canvas_file_1_g = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_file_1_g)
+            self.widget_file_1_g.hide()
+            self.widget_file_1_g.deleteLater()
+            self.widget_file_1_g = None
+
+    def update_file_1_g_dot(self, cur_time: float):
+        if(
+            self.canvas_file_1_g is None or self.widget_file_1_g is None or self.bg_file_1_g is None
+        ):
+            return
+
+        self.canvas_file_1_g.restore_region(self.bg_file_1_g)
+
+        if self.g_dot_1 is not None and self.df1 is not None:
+            time_col = pd.to_numeric(self.df1.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df1.iloc[closest_row, 7]
+            y = self.df1.iloc[closest_row, 8]
+            self.g_dot_1.set_data([x], [y])
+            self.canvas_file_1_g.axes.draw_artist(self.g_dot_1)
+
+        self.canvas_file_1_g.blit(self.canvas_file_1_g.axes.bbox)
+
+    def build_file_2_g(self, df2: pd.DataFrame | None):
+        self.destroy_file_2_g()
+
+        if isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_file_2_g = QWidget()
+            self.widget_file_2_g.setMinimumHeight(400)
+            self.layout_file_2_g = QVBoxLayout()
+            self.canvas_file_2_g = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_file_2_g.axes.scatter(self.df2.iloc[:, 7], self.df2.iloc[:, 8], color="#5d0bba", marker="o", s=10, zorder=0)
+            self.canvas_file_2_g.axes.set_title("G-G Plot (File 2)")
+            self.canvas_file_2_g.axes.set_xlabel("Lateral Acceleration (g)")
+            self.canvas_file_2_g.axes.set_ylabel("Longitudinal Acceleration (g)")
+            self.g_dot_2 = self.canvas_file_2_g.axes.plot([], [], color="yellow", marker="o", markersize=12, zorder=4, animated=True)[0]
+
+            self.bg_file_2_g = None
+
+            def on_draw(event):
+                self.bg_file_2_g = self.canvas_file_2_g.copy_from_bbox(
+                    self.canvas_file_2_g.axes.bbox
+                )
+                if self.g_dot_2:
+                    self.canvas_file_2_g.axes.draw_artist(self.g_dot_2)
+
+            self.canvas_file_2_g.mpl_connect("draw_event", on_draw)
+            self.canvas_file_2_g.draw()
+            self.layout_file_2_g.addWidget(self.canvas_file_2_g)  # type: ignore
+            self.widget_file_2_g.setLayout(self.layout_file_2_g)  # type: ignore
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_file_2_g)
+
+    def destroy_file_2_g(self):
+        if self.widget_file_2_g is not None:
+            self.g_dot_2 = None
+            self.canvas_file_2_g = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_file_2_g)
+            self.widget_file_2_g.hide()
+            self.widget_file_2_g.deleteLater()
+            self.widget_file_2_g = None
+
+    def update_file_2_g_dot(self, cur_time: float):
+        if (
+                self.canvas_file_2_g is None or self.widget_file_2_g is None or self.bg_file_2_g is None
+        ):
+            return
+
+        self.canvas_file_2_g.restore_region(self.bg_file_2_g)
+
+        if self.g_dot_2 is not None and self.df2 is not None:
+            time_col = pd.to_numeric(self.df2.iloc[:, 2], errors="coerce").to_numpy(dtype=float)
+            closest_row = np.nanargmin(np.abs(time_col - float(cur_time)))
+            x = self.df2.iloc[closest_row, 7]
+            y = self.df2.iloc[closest_row, 8]
+            self.g_dot_2.set_data([x], [y])
+            self.canvas_file_2_g.axes.draw_artist(self.g_dot_2)
+
+        self.canvas_file_2_g.blit(self.canvas_file_2_g.axes.bbox)
+
     def build_speed(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_speed()
 
@@ -1070,6 +1405,321 @@ class DataWindow(QWidget):
             self.widget_speed.deleteLater()
             self.widget_speed = None
             self.active_plots.pop("speed", None)
+
+    def build_radius(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_radius()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_radius = QWidget()
+            self.widget_radius.setMinimumHeight(400)
+            self.layout_radius = QVBoxLayout()
+            self.canvas_radius = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_radius.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 6], color="#9b3200", linewidth=0.5)
+            self.canvas_radius.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 6], color="#ff9100", linewidth=0.5)
+            self.canvas_radius.axes.set_title("Radius")
+            self.canvas_radius.axes.set_xlabel("Time (s)")
+            self.canvas_radius.axes.set_ylabel("Radius (ft)")
+            self.canvas_radius.draw()
+            self.layout_radius.addWidget(self.canvas_radius)
+            self.widget_radius.setLayout(self.layout_radius)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_radius)
+
+            self.active_plots["radius"] = {"canvas": self.canvas_radius, "axis": self.canvas_radius.axes,
+                                           "line": self.canvas_radius.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_radius = QWidget()
+            self.widget_radius.setMinimumHeight(400)
+            self.layout_radius = QVBoxLayout()
+            self.canvas_radius = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_radius.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 6], color="#9b3200", linewidth=0.5)
+            self.canvas_radius.axes.set_title("Radius")
+            self.canvas_radius.axes.set_xlabel("Time (s)")
+            self.canvas_radius.axes.set_ylabel("Radius (ft)")
+            self.canvas_radius.draw()
+            self.layout_radius.addWidget(self.canvas_radius)
+            self.widget_radius.setLayout(self.layout_radius)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_radius)
+
+            self.active_plots["radius"] = {"canvas": self.canvas_radius, "axis": self.canvas_radius.axes,
+                                           "line": self.canvas_radius.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_radius = QWidget()
+            self.widget_radius.setMinimumHeight(400)
+            self.layout_radius = QVBoxLayout()
+            self.canvas_radius = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_radius.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 6], color="#9b3200", linewidth=0.5)
+            self.canvas_radius.axes.set_title("Radius")
+            self.canvas_radius.axes.set_xlabel("Time (s)")
+            self.canvas_radius.axes.set_ylabel("Radius (ft)")
+            self.canvas_radius.draw()
+            self.layout_radius.addWidget(self.canvas_radius)
+            self.widget_radius.setLayout(self.layout_radius)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_radius)
+
+            self.active_plots["radius"] = {"canvas": self.canvas_radius, "axis": self.canvas_radius.axes,
+                                           "line": self.canvas_radius.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        else:
+            return
+
+
+    def destroy_radius(self):
+        if self.widget_radius is not None:
+            self.canvas_radius = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_radius)
+            self.widget_radius.hide()
+            self.widget_radius.deleteLater()
+            self.widget_radius = None
+            self.active_plots.pop("radius", None)
+
+    def build_steering_angle(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_steering_angle()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_steering_angle = QWidget()
+            self.widget_steering_angle.setMinimumHeight(400)
+            self.layout_steering_angle = QVBoxLayout()
+            self.canvas_steering_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_steering_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 9], color="#878787", linewidth=0.5)
+            self.canvas_steering_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 9], color="#ffffff", linewidth=0.5)
+            self.canvas_steering_angle.axes.set_title("Steering Angle")
+            self.canvas_steering_angle.axes.set_xlabel("Time (s)")
+            self.canvas_steering_angle.axes.set_ylabel("Angle (Degrees)")
+            self.canvas_steering_angle.draw()
+            self.layout_steering_angle.addWidget(self.canvas_steering_angle)
+            self.widget_steering_angle.setLayout(self.layout_steering_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_steering_angle)
+
+            self.active_plots["steering_angle"] = {"canvas": self.canvas_steering_angle, "axis": self.canvas_steering_angle.axes,
+                                           "line": self.canvas_steering_angle.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_steering_angle = QWidget()
+            self.widget_steering_angle.setMinimumHeight(400)
+            self.layout_steering_angle = QVBoxLayout()
+            self.canvas_steering_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_steering_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 9], color="#ffffff",
+                                                 linewidth=0.5)
+            self.canvas_steering_angle.axes.set_title("Steering Angle")
+            self.canvas_steering_angle.axes.set_xlabel("Time (s)")
+            self.canvas_steering_angle.axes.set_ylabel("Angle (Degrees)")
+            self.canvas_steering_angle.draw()
+            self.layout_steering_angle.addWidget(self.canvas_steering_angle)
+            self.widget_steering_angle.setLayout(self.layout_steering_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_steering_angle)
+
+            self.active_plots["steering_angle"] = {"canvas": self.canvas_steering_angle,
+                                                   "axis": self.canvas_steering_angle.axes,
+                                                   "line": self.canvas_steering_angle.axes.axvline(x=0, color="red",
+                                                                                                   linestyle="-",
+                                                                                                   linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_steering_angle = QWidget()
+            self.widget_steering_angle.setMinimumHeight(400)
+            self.layout_steering_angle = QVBoxLayout()
+            self.canvas_steering_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_steering_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 9], color="#ffffff",
+                                                 linewidth=0.5)
+            self.canvas_steering_angle.axes.set_title("Steering Angle")
+            self.canvas_steering_angle.axes.set_xlabel("Time (s)")
+            self.canvas_steering_angle.axes.set_ylabel("Angle (Degrees)")
+            self.canvas_steering_angle.draw()
+            self.layout_steering_angle.addWidget(self.canvas_steering_angle)
+            self.widget_steering_angle.setLayout(self.layout_steering_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_steering_angle)
+
+            self.active_plots["steering_angle"] = {"canvas": self.canvas_steering_angle,
+                                                   "axis": self.canvas_steering_angle.axes,
+                                                   "line": self.canvas_steering_angle.axes.axvline(x=0, color="red",
+                                                                                                   linestyle="-",
+                                                                                                   linewidth=1)}
+        else:
+            return
+
+    def destroy_steering_angle(self):
+        if self.widget_steering_angle is not None:
+            self.canvas_steering_angle = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_steering_angle)
+            self.widget_steering_angle.hide()
+            self.widget_steering_angle.deleteLater()
+            self.widget_steering_angle = None
+            self.active_plots.pop("steering_angle", None)
+
+    def build_acceleration_prs(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_acceleration_prs()
+
+    def destroy_acceleration_prs(self):
+        if self.widget_acceleration_prs is not None:
+            self.canvas_acceleration_prs = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_acceleration_prs)
+            self.widget_acceleration_prs.hide()
+            self.widget_acceleration_prs.deleteLater()
+            self.widget_acceleration_prs = None
+            self.active_plots.pop("acceleration_prs", None)
+
+    def build_brake_prs(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_brake_prs()
+
+    def destroy_brake_prs(self):
+        if self.widget_brake_prs is not None:
+            self.canvas_brake_prs = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_brake_prs)
+            self.widget_brake_prs.hide()
+            self.widget_brake_prs.deleteLater()
+            self.widget_brake_prs = None
+            self.active_plots.pop("brake_prs", None)
+
+    def build_yaw_vel(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_yaw_vel()
+
+    def destroy_yaw_vel(self):
+        if self.widget_yaw_vel is not None:
+            self.canvas_yaw_vel = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_yaw_vel)
+            self.widget_yaw_vel.hide()
+            self.widget_yaw_vel.deleteLater()
+            self.widget_yaw_vel = None
+            self.active_plots.pop("yaw_vel", None)
+
+    def build_yaw_acc(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_yaw_acc()
+
+    def destroy_yaw_acc(self):
+        if self.widget_yaw_acc is not None:
+            self.canvas_yaw_acc = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_yaw_acc)
+            self.widget_yaw_acc.hide()
+            self.widget_yaw_acc.deleteLater()
+            self.widget_yaw_acc = None
+            self.active_plots.pop("yaw_acc", None)
+
+    def build_slip_angle(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_slip_angle()
+
+    def destroy_slip_angle(self):
+        if self.widget_slip_angle is not None:
+            self.canvas_slip_angle = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_slip_angle)
+            self.widget_slip_angle.hide()
+            self.widget_slip_angle.deleteLater()
+            self.widget_slip_angle = None
+            self.active_plots.pop("slip_angle", None)
+
+    def build_slip_ratio(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_slip_ratio()
+
+    def destroy_slip_ratio(self):
+        if self.widget_slip_ratio is not None:
+            self.canvas_slip_ratio = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_slip_ratio)
+            self.widget_slip_ratio.hide()
+            self.widget_slip_ratio.deleteLater()
+            self.widget_slip_ratio = None
+            self.active_plots.pop("slip_ratio", None)
+
+    def build_tire_fy(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_slip_ratio()
+
+    def destroy_tire_fy(self):
+        if self.widget_tire_fy is not None:
+            self.canvas_tire_fy = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_tire_fy)
+            self.widget_tire_fy.hide()
+            self.widget_tire_fy.deleteLater()
+            self.widget_tire_fy = None
+            self.active_plots.pop("tire_fy", None)
+
+    def build_roll_grad(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_roll_grad()
+
+    def destroy_roll_grad(self):
+        if self.widget_roll_grad is not None:
+            self.canvas_roll_grad = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_roll_grad)
+            self.widget_roll_grad.hide()
+            self.widget_roll_grad.deleteLater()
+            self.widget_roll_grad = None
+            self.active_plots.pop("roll_grad", None)
+
+    def build_pitch_grad(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_pitch_grad()
+
+    def destroy_pitch_grad(self):
+        if self.widget_pitch_grad is not None:
+            self.canvas_pitch_grad = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_pitch_grad)
+            self.widget_pitch_grad.hide()
+            self.widget_pitch_grad.deleteLater()
+            self.widget_pitch_grad = None
+            self.active_plots.pop("pitch_grad", None)
+
+    def build_beta(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_beta()
+
+    def destroy_beta(self):
+        if self.widget_beta is not None:
+            self.canvas_beta = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_beta)
+            self.widget_beta.hide()
+            self.widget_beta.deleteLater()
+            self.widget_beta = None
+            self.active_plots.pop("beta", None)
+
+    def build_power_draw(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_power_draw()
+
+    def destroy_power_draw(self):
+        if self.widget_power_draw is not None:
+            self.canvas_power_draw = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_power_draw)
+            self.widget_power_draw.hide()
+            self.widget_power_draw.deleteLater()
+            self.widget_power_draw = None
+            self.active_plots.pop("power_draw", None)
+
+    def build_battery_power(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
+        self.destroy_battery_power()
+
+    def destroy_battery_power(self):
+        if self.widget_battery_power is not None:
+            self.canvas_battery_power = None
+            if self.layout_widgets is not None:
+                self.layout_widgets.removeWidget(self.widget_battery_power)
+            self.widget_battery_power.hide()
+            self.widget_battery_power.deleteLater()
+            self.widget_battery_power = None
+            self.active_plots.pop("battery_power", None)
 
     def update_plots(self, val: float):
         val = float(val)
