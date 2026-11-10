@@ -17,6 +17,8 @@ import shutil
 import uuid
 from pathlib import Path
 
+from scipy.signal import savgol_filter
+
 window_titles = [
     "VMTAS",
     "VMTAS File Addition",
@@ -1568,6 +1570,16 @@ class DataWindow(QWidget):
     def build_acceleration_prs(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_acceleration_prs()
 
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+        else:
+            return
+
     def destroy_acceleration_prs(self):
         if self.widget_acceleration_prs is not None:
             self.canvas_acceleration_prs = None
@@ -1580,6 +1592,16 @@ class DataWindow(QWidget):
 
     def build_brake_prs(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_brake_prs()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+        else:
+            return
 
     def destroy_brake_prs(self):
         if self.widget_brake_prs is not None:
@@ -1594,6 +1616,72 @@ class DataWindow(QWidget):
     def build_yaw_vel(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_yaw_vel()
 
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_yaw_vel = QWidget()
+            self.widget_yaw_vel.setMinimumHeight(400)
+            self.layout_yaw_vel = QVBoxLayout()
+            self.canvas_yaw_vel = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_vel.axes.plot(self.df1.iloc[:, 2], (self.df1.iloc[:, 5] * 1.4667 / self.df1.iloc[:, 6]), color="#610091", linewidth=0.5)
+            self.canvas_yaw_vel.axes.plot(self.df2.iloc[:, 2], (self.df2.iloc[:, 5] * 1.4667 / self.df2.iloc[:, 6]), color="#ab00ff", linewidth=0.5)
+            self.canvas_yaw_vel.axes.set_title("Yaw Velocity")
+            self.canvas_yaw_vel.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_vel.axes.set_ylabel("Yaw Velocity (1/s)")
+            self.canvas_yaw_vel.draw()
+            self.layout_yaw_vel.addWidget(self.canvas_yaw_vel)
+            self.widget_yaw_vel.setLayout(self.layout_yaw_vel)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_vel)
+
+            self.active_plots["yaw_vel"] = {"canvas": self.canvas_yaw_vel, "axis": self.canvas_yaw_vel.axes,
+                                           "line": self.canvas_yaw_vel.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_yaw_vel = QWidget()
+            self.widget_yaw_vel.setMinimumHeight(400)
+            self.layout_yaw_vel = QVBoxLayout()
+            self.canvas_yaw_vel = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_vel.axes.plot(self.df1.iloc[:, 2], (self.df1.iloc[:, 5] * 1.4667 / self.df1.iloc[:, 6]),
+                                          color="#ab00ff", linewidth=0.5)
+            self.canvas_yaw_vel.axes.set_title("Yaw Velocity")
+            self.canvas_yaw_vel.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_vel.axes.set_ylabel("Yaw Velocity (1/s)")
+            self.canvas_yaw_vel.draw()
+            self.layout_yaw_vel.addWidget(self.canvas_yaw_vel)
+            self.widget_yaw_vel.setLayout(self.layout_yaw_vel)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_vel)
+
+            self.active_plots["yaw_vel"] = {"canvas": self.canvas_yaw_vel, "axis": self.canvas_yaw_vel.axes,
+                                            "line": self.canvas_yaw_vel.axes.axvline(x=0, color="red", linestyle="-",
+                                                                                     linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_yaw_vel = QWidget()
+            self.widget_yaw_vel.setMinimumHeight(400)
+            self.layout_yaw_vel = QVBoxLayout()
+            self.canvas_yaw_vel = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_vel.axes.plot(self.df2.iloc[:, 2], (self.df2.iloc[:, 5] * 1.4667 / self.df1.iloc[:, 6]),
+                                          color="#ab00ff", linewidth=0.5)
+            self.canvas_yaw_vel.axes.set_title("Yaw Velocity")
+            self.canvas_yaw_vel.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_vel.axes.set_ylabel("Yaw Velocity (1/s)")
+            self.canvas_yaw_vel.draw()
+            self.layout_yaw_vel.addWidget(self.canvas_yaw_vel)
+            self.widget_yaw_vel.setLayout(self.layout_yaw_vel)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_vel)
+
+            self.active_plots["yaw_vel"] = {"canvas": self.canvas_yaw_vel, "axis": self.canvas_yaw_vel.axes,
+                                            "line": self.canvas_yaw_vel.axes.axvline(x=0, color="red", linestyle="-",
+                                                                                     linewidth=1)}
+        else:
+            return
+
     def destroy_yaw_vel(self):
         if self.widget_yaw_vel is not None:
             self.canvas_yaw_vel = None
@@ -1606,6 +1694,104 @@ class DataWindow(QWidget):
 
     def build_yaw_acc(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_yaw_acc()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_yaw_acc = QWidget()
+            self.widget_yaw_acc.setMinimumHeight(400)
+            self.layout_yaw_acc = QVBoxLayout()
+            self.canvas_yaw_acc = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_acc.axes.axhline(y=0, color="#666666", linewidth=0.8, linestyle="--", zorder=1)
+
+            t1 = self.df1.iloc[:, 2].to_numpy()
+            yaw_vel_1 = (
+                self.df1.iloc[:, 5] * 1.4667 / self.df1.iloc[:, 6]
+            )
+            dt1 = np.mean(np.diff(t1))
+            yaw_accel_1 = savgol_filter(yaw_vel_1, window_length=15, polyorder=2, deriv=1, delta=dt1)
+            self.canvas_yaw_acc.axes.plot(t1, yaw_accel_1, color="#579e00", linewidth=0.5, zorder=3)
+
+            t2 = self.df2.iloc[:, 2].to_numpy()
+            yaw_vel_2 = (
+                self.df2.iloc[:, 5] * 1.4667 / self.df2.iloc[:, 6]
+            )
+            dt2 = np.mean(np.diff(t2))
+            yaw_accel_2 = savgol_filter(yaw_vel_2, window_length=15, polyorder=2, deriv=1, delta=dt2)
+            self.canvas_yaw_acc.axes.plot(t2, yaw_accel_2, color="#8bff00", linewidth=0.5, zorder=3)
+
+            self.canvas_yaw_acc.axes.set_title("Yaw Acceleration")
+            self.canvas_yaw_acc.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_acc.axes.set_ylabel("Yaw Acceleration (1/s/s)")
+            self.canvas_yaw_acc.draw()
+            self.layout_yaw_acc.addWidget(self.canvas_yaw_acc)
+            self.widget_yaw_acc.setLayout(self.layout_yaw_acc)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_acc)
+
+            self.active_plots["yaw_acc"] = {"canvas": self.canvas_yaw_acc, "axis": self.canvas_yaw_acc.axes,
+                                           "line": self.canvas_yaw_acc.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_yaw_acc = QWidget()
+            self.widget_yaw_acc.setMinimumHeight(400)
+            self.layout_yaw_acc = QVBoxLayout()
+            self.canvas_yaw_acc = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_acc.axes.axhline(y=0, color="#666666", linewidth=0.8, linestyle="--", zorder=1)
+
+            t1 = self.df1.iloc[:, 2].to_numpy()
+            yaw_vel_1 = (
+                    self.df1.iloc[:, 5] * 1.4667 / self.df1.iloc[:, 6]
+            )
+            dt1 = np.mean(np.diff(t1))
+            yaw_accel_1 = savgol_filter(yaw_vel_1, window_length=15, polyorder=2, deriv=1, delta=dt1)
+            self.canvas_yaw_acc.axes.plot(t1, yaw_accel_1, color="#579e00", linewidth=0.5, zorder=3)
+
+            self.canvas_yaw_acc.axes.set_title("Yaw Acceleration")
+            self.canvas_yaw_acc.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_acc.axes.set_ylabel("Yaw Acceleration (1/s/s)")
+            self.canvas_yaw_acc.draw()
+            self.layout_yaw_acc.addWidget(self.canvas_yaw_acc)
+            self.widget_yaw_acc.setLayout(self.layout_yaw_acc)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_acc)
+
+            self.active_plots["yaw_acc"] = {"canvas": self.canvas_yaw_acc, "axis": self.canvas_yaw_acc.axes,
+                                            "line": self.canvas_yaw_acc.axes.axvline(x=0, color="red", linestyle="-",
+                                                                                     linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_yaw_acc = QWidget()
+            self.widget_yaw_acc.setMinimumHeight(400)
+            self.layout_yaw_acc = QVBoxLayout()
+            self.canvas_yaw_acc = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_yaw_acc.axes.axhline(y=0, color="#666666", linewidth=0.8, linestyle="--", zorder=1)
+
+            t2 = self.df2.iloc[:, 2].to_numpy()
+            yaw_vel_2 = (
+                    self.df2.iloc[:, 5] * 1.4667 / self.df2.iloc[:, 6]
+            )
+            dt2 = np.mean(np.diff(t2))
+            yaw_accel_2 = savgol_filter(yaw_vel_2, window_length=15, polyorder=2, deriv=1, delta=dt2)
+            self.canvas_yaw_acc.axes.plot(t2, yaw_accel_2, color="#8bff00", linewidth=0.5, zorder=3)
+
+            self.canvas_yaw_acc.axes.set_title("Yaw Acceleration")
+            self.canvas_yaw_acc.axes.set_xlabel("Time (s)")
+            self.canvas_yaw_acc.axes.set_ylabel("Yaw Acceleration (1/s/s)")
+            self.canvas_yaw_acc.draw()
+            self.layout_yaw_acc.addWidget(self.canvas_yaw_acc)
+            self.widget_yaw_acc.setLayout(self.layout_yaw_acc)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_yaw_acc)
+
+            self.active_plots["yaw_acc"] = {"canvas": self.canvas_yaw_acc, "axis": self.canvas_yaw_acc.axes,
+                                            "line": self.canvas_yaw_acc.axes.axvline(x=0, color="red", linestyle="-",
+                                                                                     linewidth=1)}
+        else:
+            return
 
     def destroy_yaw_acc(self):
         if self.widget_yaw_acc is not None:
@@ -1620,6 +1806,79 @@ class DataWindow(QWidget):
     def build_slip_angle(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_slip_angle()
 
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_slip_angle = QWidget()
+            self.widget_slip_angle.setMinimumHeight(400)
+            self.layout_slip_angle = QVBoxLayout()
+            self.canvas_slip_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_slip_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 10], color="#82007d", linewidth=0.5)
+            self.canvas_slip_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 11], color="#008c00", linewidth=0.5)
+            self.canvas_slip_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 10], color="#ff00f5", linewidth=0.5, label="Front Slip")
+            self.canvas_slip_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 11], color="#00ff00", linewidth=0.5, label="Rear Slip")
+            self.canvas_slip_angle.axes.set_title("Slip Angle")
+            self.canvas_slip_angle.axes.set_xlabel("Time (s)")
+            self.canvas_slip_angle.axes.set_ylabel("Slip Angle (deg)")
+            self.canvas_slip_angle.axes.legend(loc=1)
+            self.canvas_slip_angle.draw()
+            self.layout_slip_angle.addWidget(self.canvas_slip_angle)
+            self.widget_slip_angle.setLayout(self.layout_slip_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_slip_angle)
+
+            self.active_plots["slip_angle"] = {"canvas": self.canvas_slip_angle, "axis": self.canvas_slip_angle.axes,
+                                           "line": self.canvas_slip_angle.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_slip_angle = QWidget()
+            self.widget_slip_angle.setMinimumHeight(400)
+            self.layout_slip_angle = QVBoxLayout()
+            self.canvas_slip_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_slip_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 10], color="#ff00f5", linewidth=0.5,
+                                             label="Front Slip")
+            self.canvas_slip_angle.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 11], color="#00ff00", linewidth=0.5,
+                                             label="Rear Slip")
+            self.canvas_slip_angle.axes.set_title("Slip Angle")
+            self.canvas_slip_angle.axes.set_xlabel("Time (s)")
+            self.canvas_slip_angle.axes.set_ylabel("Slip Angle (deg)")
+            self.canvas_slip_angle.axes.legend(loc=1)
+            self.canvas_slip_angle.draw()
+            self.layout_slip_angle.addWidget(self.canvas_slip_angle)
+            self.widget_slip_angle.setLayout(self.layout_slip_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_slip_angle)
+
+            self.active_plots["slip_angle"] = {"canvas": self.canvas_slip_angle, "axis": self.canvas_slip_angle.axes,
+                                               "line": self.canvas_slip_angle.axes.axvline(x=0, color="red",
+                                                                                           linestyle="-", linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.widget_slip_angle = QWidget()
+            self.widget_slip_angle.setMinimumHeight(400)
+            self.layout_slip_angle = QVBoxLayout()
+            self.canvas_slip_angle = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_slip_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 10], color="#ff00f5", linewidth=0.5,
+                                             label="Front Slip")
+            self.canvas_slip_angle.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 11], color="#00ff00", linewidth=0.5,
+                                             label="Rear Slip")
+            self.canvas_slip_angle.axes.set_title("Slip Angle")
+            self.canvas_slip_angle.axes.set_xlabel("Time (s)")
+            self.canvas_slip_angle.axes.set_ylabel("Slip Angle (deg)")
+            self.canvas_slip_angle.axes.legend(loc=1)
+            self.canvas_slip_angle.draw()
+            self.layout_slip_angle.addWidget(self.canvas_slip_angle)
+            self.widget_slip_angle.setLayout(self.layout_slip_angle)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_slip_angle)
+
+            self.active_plots["slip_angle"] = {"canvas": self.canvas_slip_angle, "axis": self.canvas_slip_angle.axes,
+                                               "line": self.canvas_slip_angle.axes.axvline(x=0, color="red",
+                                                                                           linestyle="-", linewidth=1)}
+        else:
+            return
+
     def destroy_slip_angle(self):
         if self.widget_slip_angle is not None:
             self.canvas_slip_angle = None
@@ -1632,6 +1891,8 @@ class DataWindow(QWidget):
 
     def build_slip_ratio(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_slip_ratio()
+
+
 
     def destroy_slip_ratio(self):
         if self.widget_slip_ratio is not None:
@@ -1685,6 +1946,70 @@ class DataWindow(QWidget):
     def build_beta(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_beta()
 
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_beta = QWidget()
+            self.widget_beta.setMinimumHeight(400)
+            self.layout_beta = QVBoxLayout()
+            self.canvas_beta = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_beta.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 12], color="#008a73", linewidth=0.5)
+            self.canvas_beta.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 12], color="#00ffd4", linewidth=0.5)
+            self.canvas_beta.axes.set_title("Beta")
+            self.canvas_beta.axes.set_xlabel("Time (s)")
+            self.canvas_beta.axes.set_ylabel("Beta (Degrees)")
+            self.canvas_beta.draw()
+            self.layout_beta.addWidget(self.canvas_beta)
+            self.widget_beta.setLayout(self.layout_beta)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_beta)
+
+            self.active_plots["beta"] = {"canvas": self.canvas_beta, "axis": self.canvas_beta.axes,
+                                           "line": self.canvas_beta.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_beta = QWidget()
+            self.widget_beta.setMinimumHeight(400)
+            self.layout_beta = QVBoxLayout()
+            self.canvas_beta = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_beta.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 12], color="#00ffd4", linewidth=0.5)
+            self.canvas_beta.axes.set_title("Beta")
+            self.canvas_beta.axes.set_xlabel("Time (s)")
+            self.canvas_beta.axes.set_ylabel("Beta (Degrees)")
+            self.canvas_beta.draw()
+            self.layout_beta.addWidget(self.canvas_beta)
+            self.widget_beta.setLayout(self.layout_beta)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_beta)
+
+            self.active_plots["beta"] = {"canvas": self.canvas_beta, "axis": self.canvas_beta.axes,
+                                         "line": self.canvas_beta.axes.axvline(x=0, color="red", linestyle="-",
+                                                                               linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_beta = QWidget()
+            self.widget_beta.setMinimumHeight(400)
+            self.layout_beta = QVBoxLayout()
+            self.canvas_beta = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_beta.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 12], color="#00ffd4", linewidth=0.5)
+            self.canvas_beta.axes.set_title("Beta")
+            self.canvas_beta.axes.set_xlabel("Time (s)")
+            self.canvas_beta.axes.set_ylabel("Beta (Degrees)")
+            self.canvas_beta.draw()
+            self.layout_beta.addWidget(self.canvas_beta)
+            self.widget_beta.setLayout(self.layout_beta)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_beta)
+
+            self.active_plots["beta"] = {"canvas": self.canvas_beta, "axis": self.canvas_beta.axes,
+                                         "line": self.canvas_beta.axes.axvline(x=0, color="red", linestyle="-",
+                                                                               linewidth=1)}
+        else:
+            return
+
     def destroy_beta(self):
         if self.widget_beta is not None:
             self.canvas_beta = None
@@ -1698,6 +2023,71 @@ class DataWindow(QWidget):
     def build_power_draw(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_power_draw()
 
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_power_draw = QWidget()
+            self.widget_power_draw.setMinimumHeight(400)
+            self.layout_power_draw = QVBoxLayout()
+            self.canvas_power_draw = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_power_draw.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 15], color="#909000", linewidth=0.5)
+            self.canvas_power_draw.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 15], color="#ffff00", linewidth=0.5)
+            self.canvas_power_draw.axes.set_title("Power Draw")
+            self.canvas_power_draw.axes.set_xlabel("Time (s)")
+            self.canvas_power_draw.axes.set_ylabel("Power Draw (%)")
+            self.canvas_power_draw.draw()
+            self.layout_power_draw.addWidget(self.canvas_power_draw)
+            self.widget_power_draw.setLayout(self.layout_power_draw)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_power_draw)
+
+            self.active_plots["power_draw"] = {"canvas": self.canvas_power_draw, "axis": self.canvas_power_draw.axes,
+                                           "line": self.canvas_power_draw.axes.axvline(x=0, color="red", linestyle="-", linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_power_draw = QWidget()
+            self.widget_power_draw.setMinimumHeight(400)
+            self.layout_power_draw = QVBoxLayout()
+            self.canvas_power_draw = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_power_draw.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 15], color="#ffff00", linewidth=0.5)
+            self.canvas_power_draw.axes.set_title("Power Draw")
+            self.canvas_power_draw.axes.set_xlabel("Time (s)")
+            self.canvas_power_draw.axes.set_ylabel("Power Draw (%)")
+            self.canvas_power_draw.draw()
+            self.layout_power_draw.addWidget(self.canvas_power_draw)
+            self.widget_power_draw.setLayout(self.layout_power_draw)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_power_draw)
+
+            self.active_plots["power_draw"] = {"canvas": self.canvas_power_draw, "axis": self.canvas_power_draw.axes,
+                                               "line": self.canvas_power_draw.axes.axvline(x=0, color="red",
+                                                                                           linestyle="-", linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_power_draw = QWidget()
+            self.widget_power_draw.setMinimumHeight(400)
+            self.layout_power_draw = QVBoxLayout()
+            self.canvas_power_draw = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_power_draw.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 15], color="#ffff00", linewidth=0.5)
+            self.canvas_power_draw.axes.set_title("Power Draw")
+            self.canvas_power_draw.axes.set_xlabel("Time (s)")
+            self.canvas_power_draw.axes.set_ylabel("Power Draw (%)")
+            self.canvas_power_draw.draw()
+            self.layout_power_draw.addWidget(self.canvas_power_draw)
+            self.widget_power_draw.setLayout(self.layout_power_draw)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_power_draw)
+
+            self.active_plots["power_draw"] = {"canvas": self.canvas_power_draw, "axis": self.canvas_power_draw.axes,
+                                               "line": self.canvas_power_draw.axes.axvline(x=0, color="red",
+                                                                                           linestyle="-", linewidth=1)}
+        else:
+            return
+
+
     def destroy_power_draw(self):
         if self.widget_power_draw is not None:
             self.canvas_power_draw = None
@@ -1710,6 +2100,81 @@ class DataWindow(QWidget):
 
     def build_battery_power(self, df1: pd.DataFrame | None, df2: pd.DataFrame | None):
         self.destroy_battery_power()
+
+        if isinstance(df1, pd.DataFrame) and isinstance(df2, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_battery_power = QWidget()
+            self.widget_battery_power.setMinimumHeight(400)
+            self.layout_battery_power = QVBoxLayout()
+            self.canvas_battery_power = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_battery_power.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 13], color="#872f00",
+                                                 linewidth=0.5)
+            self.canvas_battery_power.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 13], color="#ff3d00",
+                                                 linewidth=0.5)
+            self.canvas_battery_power.axes.set_title("Battery Power")
+            self.canvas_battery_power.axes.set_xlabel("Time (s)")
+            self.canvas_battery_power.axes.set_ylabel("Battery Power (kW)")
+            self.canvas_battery_power.draw()
+            self.layout_battery_power.addWidget(self.canvas_battery_power)
+            self.widget_battery_power.setLayout(self.layout_battery_power)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_battery_power)
+
+            self.active_plots["battery_power"] = {"canvas": self.canvas_battery_power,
+                                                   "axis": self.canvas_battery_power.axes,
+                                                   "line": self.canvas_battery_power.axes.axvline(x=0, color="red",
+                                                                                                   linestyle="-",
+                                                                                                   linewidth=1)}
+        elif isinstance(df1, pd.DataFrame):
+            self.df1 = df1 if isinstance(df1, pd.DataFrame) else None
+
+            self.widget_battery_power = QWidget()
+            self.widget_battery_power.setMinimumHeight(400)
+            self.layout_battery_power = QVBoxLayout()
+            self.canvas_battery_power = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_battery_power.axes.plot(self.df1.iloc[:, 2], self.df1.iloc[:, 13], color="#ff3d00",
+                                                linewidth=0.5)
+            self.canvas_battery_power.axes.set_title("Battery Power")
+            self.canvas_battery_power.axes.set_xlabel("Time (s)")
+            self.canvas_battery_power.axes.set_ylabel("Battery Power (kW)")
+            self.canvas_battery_power.draw()
+            self.layout_battery_power.addWidget(self.canvas_battery_power)
+            self.widget_battery_power.setLayout(self.layout_battery_power)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_battery_power)
+
+            self.active_plots["battery_power"] = {"canvas": self.canvas_battery_power,
+                                                  "axis": self.canvas_battery_power.axes,
+                                                  "line": self.canvas_battery_power.axes.axvline(x=0, color="red",
+                                                                                                 linestyle="-",
+                                                                                                 linewidth=1)}
+        elif isinstance(df2, pd.DataFrame):
+            self.df2 = df2 if isinstance(df2, pd.DataFrame) else None
+
+            self.widget_battery_power = QWidget()
+            self.widget_battery_power.setMinimumHeight(400)
+            self.layout_battery_power = QVBoxLayout()
+            self.canvas_battery_power = MplCanvas(parent=None, width=5, height=4, dpi=100)
+            self.canvas_battery_power.axes.plot(self.df2.iloc[:, 2], self.df2.iloc[:, 13], color="#ff3d00",
+                                                linewidth=0.5)
+            self.canvas_battery_power.axes.set_title("Battery Power")
+            self.canvas_battery_power.axes.set_xlabel("Time (s)")
+            self.canvas_battery_power.axes.set_ylabel("Battery Power (kW)")
+            self.canvas_battery_power.draw()
+            self.layout_battery_power.addWidget(self.canvas_battery_power)
+            self.widget_battery_power.setLayout(self.layout_battery_power)
+            if self.layout_widgets is not None:
+                self.layout_widgets.addWidget(self.widget_battery_power)
+
+            self.active_plots["battery_power"] = {"canvas": self.canvas_battery_power,
+                                                  "axis": self.canvas_battery_power.axes,
+                                                  "line": self.canvas_battery_power.axes.axvline(x=0, color="red",
+                                                                                                 linestyle="-",
+                                                                                                 linewidth=1)}
+        else:
+            return
 
     def destroy_battery_power(self):
         if self.widget_battery_power is not None:
